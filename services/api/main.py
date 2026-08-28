@@ -493,3 +493,20 @@ async def get_evidence_preview(doc_id: str):
                     return FileResponse(doc.file_path, media_type=media_type)
                 return JSONResponse({"raw_content": doc.raw_content, "filename": doc.filename})
     raise HTTPException(status_code=404, detail="Evidence document not found.")
+
+
+# Mount static production build of frontend
+dist_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))), "apps", "web", "dist")
+if os.path.exists(dist_dir):
+    assets_dir = os.path.join(dist_dir, "assets")
+    if os.path.exists(assets_dir):
+        app.mount("/assets", StaticFiles(directory=assets_dir), name="assets")
+
+    @app.get("/{full_path:path}")
+    async def serve_production_spa(full_path: str):
+        if full_path.startswith("api"):
+            raise HTTPException(status_code=404, detail="API route not found")
+        file_path = os.path.join(dist_dir, full_path)
+        if os.path.exists(file_path) and os.path.isfile(file_path):
+            return FileResponse(file_path)
+        return FileResponse(os.path.join(dist_dir, "index.html"))

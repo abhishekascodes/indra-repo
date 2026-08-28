@@ -117,25 +117,24 @@ def run_realistic_demo_recording():
         inject_custom_mouse_cursor(page)
 
         # Step 2: Open Epistemic Ledger & Counterfactual (00:06 - 00:14)
-        epistemic_btn = page.locator("button:has-text('Epistemic Ledger')")
+        epistemic_btn = page.locator("button:has-text('Inspect Proof')")
         print("[06s] Inspecting Epistemic Ledger (Why INDRA believes this)...")
         human_click(page, epistemic_btn, post_pause=2.0)
         close_ledger = page.locator("button:has-text('Close Ledger')")
         human_click(page, close_ledger, post_pause=1.0)
 
-        whatif_btn = page.locator("button:has-text('Simulate What-If')")
+        whatif_btn = page.locator("button:has-text('What-If Simulation')")
         print("[10s] Simulating Counterfactual What-If Dual World...")
         human_click(page, whatif_btn, post_pause=2.0)
         close_whatif = page.locator("button:has-text('Close Simulation')")
         human_click(page, close_whatif, post_pause=1.0)
 
         # Step 3: Case Situation & Diagnostic Intelligence (00:14 - 00:20)
-        print("[14s] Reviewing Root Cause Hypothesis & Cross-Domain Flow...")
-        page.wait_for_selector("text=Case Situation & Diagnostic Intelligence")
+        print("[14s] Reviewing Root Cause & Citizen Clarity...")
         time.sleep(1.5)
 
         # Step 4: Inspect Generated Legal Petition Dossier (00:20 - 00:26)
-        inspect_dossier = page.locator("button:has-text('Inspect Formal Legal Petition Dossier')").first
+        inspect_dossier = page.locator("button:has-text('Inspect Prepared Legal Petition')").first
         print("[20s] Inspecting Legal Petition Dossier...")
         human_click(page, inspect_dossier, post_pause=2.0)
 
@@ -143,12 +142,12 @@ def run_realistic_demo_recording():
         human_click(page, close_dossier, post_pause=1.0)
 
         # Step 5: Grant Citizen Consent (00:24 - 00:28)
-        consent_btn = page.locator("button:has-text('1. Authorize Action')").first
+        consent_btn = page.locator("button:has-text('1. Authorize INDRA to Update Payment Link')").first
         print("[24s] Granting Citizen Consent Authorization...")
         human_click(page, consent_btn, post_pause=1.8)
 
         # Step 6: Submit to Bank Portal (00:28 - 00:32)
-        submit_btn = page.locator("button:has-text('2. Submit to Bank')").first
+        submit_btn = page.locator("button:has-text('2. Submit Request to Bank Portal')").first
         print("[28s] Submitting representation to Bank Portal...")
         human_click(page, submit_btn, post_pause=2.0)
 
@@ -158,7 +157,7 @@ def run_realistic_demo_recording():
         human_click(page, ff_btn, post_pause=2.5)
 
         # Step 8: PFMS Recovery Disbursal & Crediting Rs. 48,000 (00:38 - 00:44)
-        disburse_btn = page.locator("button:has-text('Verify & Execute PFMS Disbursal')")
+        disburse_btn = page.locator("button:has-text('Verify & Credit ₹48,000 Scholarship')")
         print("[38s] Finalizing PFMS Disbursal & Crediting Rs. 48,000...")
         human_click(page, disburse_btn, post_pause=2.5)
 
@@ -169,14 +168,22 @@ def run_realistic_demo_recording():
         done_cert = page.locator("button:has-text('Done')")
         human_click(page, done_cert, post_pause=1.0)
 
-        # Step 9: React Flow Case Graph Canvas (00:44 - 00:50)
-        graph_tab = page.locator("button:has-text('Case Graph Topology')")
-        print("[45s] Exploring React Flow Case Graph Canvas...")
-        human_click(page, graph_tab, post_pause=3.0)
+        # Step 9: Switch to Engineer View & React Flow Case Graph Canvas (00:44 - 00:50)
+        eng_btn = page.locator("button:has-text('Engineer View')")
+        print("[45s] Switching to Engineer View...")
+        human_click(page, eng_btn, post_pause=1.5)
 
-        # Step 10: Evidence Vault (00:50 - 00:54)
+        graph_tab = page.locator("button:has-text('Causal Case Graph')")
+        print("[47s] Exploring React Flow Case Graph Canvas...")
+        human_click(page, graph_tab, post_pause=2.5)
+
+        # Step 10: Switch to Auditor View & Evidence Vault (00:50 - 00:54)
+        auditor_btn = page.locator("button:has-text('Auditor View')")
+        print("[50s] Switching to Auditor View...")
+        human_click(page, auditor_btn, post_pause=1.5)
+
         evidence_tab = page.locator("button:has-text('Evidence Vault & Provenance')")
-        print("[50s] Exploring Evidence Vault & Document Sheets...")
+        print("[52s] Exploring Evidence Vault & Document Sheets...")
         human_click(page, evidence_tab, post_pause=1.5)
 
         doc_buttons = page.locator(".scrollbar-none button")

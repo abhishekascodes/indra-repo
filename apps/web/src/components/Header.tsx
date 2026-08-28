@@ -147,7 +147,7 @@ export const Header: React.FC<HeaderProps> = ({
               <button
                 onClick={() => {
                   onSelectPersona('auditor');
-                  onSelectView('epistemic_ledger');
+                  onSelectView('evidence');
                 }}
                 className={`px-3 py-1.5 rounded-lg font-bold flex items-center space-x-1.5 transition-all cursor-pointer ${
                   persona === 'auditor'

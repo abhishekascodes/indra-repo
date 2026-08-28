@@ -35,7 +35,7 @@ const MOCK_FLAGSHIP_CASE: Case = {
       supporting_evidence_ids: ["doc-1", "doc-2", "doc-3"],
       counter_evidence_ids: [],
       unknowns: [],
-      causal_chain: ["node-cyber-notice", "node-canara-freeze", "node-npci-mapper", "node-pfms-rejection", "node-scholarship-loss"],
+      causal_chain: ["node-scholarship-approved", "node-payment-attempt", "node-pfms-rejection", "node-npci-mapper", "node-canara-freeze", "node-root-cause", "node-remedial-action"],
       recommended_remedy: "1. Submit formal representation to Canara Bank citing Gujarat HC Sec 102 CrPC precedent.\n2. Execute immediate re-mapping of Aadhaar APBS mandate to active State Bank of India account (*8812)."
     }
   ],
@@ -167,7 +167,7 @@ const MOCK_EPFO_CASE: Case = {
       supporting_evidence_ids: ["doc-epfo-1", "doc-epfo-2"],
       counter_evidence_ids: [],
       unknowns: [],
-      causal_chain: ["node-relieving", "node-ecr-conflict", "node-epfo-rejection"],
+      causal_chain: ["node-relieving", "node-ecr-conflict", "node-epfo-rejection", "node-joint-declaration"],
       recommended_remedy: "Submit Joint Declaration Form with certified Relieving Letter under EPFO SOP v3.0 (2024)."
     }
   ],
@@ -224,113 +224,9 @@ Digitally verified via INDRA Case Intelligence.`
   updated_at: new Date().toISOString()
 };
 
-// 3. New Domain: PMAY Gramin Housing Subsidy (Ramesh Kumar)
-const MOCK_PMAY_CASE: Case = {
-  id: "case-pmay-housing-7734",
-  title: "Ramesh Kumar - PMAY-G Housing Subsidy 2nd Tranche Blockade",
-  citizen_name: "Ramesh Kumar",
-  domain_id: "pmay_housing",
-  current_state: "USER_APPROVAL",
-  objective: "PMAY-G 2nd installment of ₹70,000 (Total ₹1,20,000) withheld due to geo-tagging coordinate discrepancy at lintel level inspection.",
-  blocker_summary: "Gram Panchayat field inspector logged geo-tag coordinates with a 140-meter GPS drift, causing automated satellite cross-verification to flag the construction as 'UNVERIFIED / OUT OF PLOT' under Rule PMAY-GEO-04.",
-  overall_confidence: 0.97,
-  simulated_day: 0,
-  facts_summary: [
-    "Ramesh Kumar was sanctioned ₹1,20,000 for rural pucca house construction under PMAY-G.",
-    "1st installment (₹40,000) successfully disbursed upon plinth completion.",
-    "Lintel inspection geo-tag was recorded at 23.0225° N, 72.5714° E (Gram Panchayat phone drift).",
-    "Registered beneficiary land parcel is at 23.0238° N, 72.5719° E (Survey No: 402/1).",
-    "Physical construction is 100% verified on citizen's actual land parcel."
-  ],
-  inferences_summary: [
-    "GPS signal degradation in rural field phone caused coordinate offset during lintel inspection.",
-    "Automated GIS validation halted 2nd tranche release without notifying the beneficiary."
-  ],
-  contradictions: [
-    {
-      id: "contra-pmay-1",
-      field: "gps_coordinates",
-      node_a_id: "node-land-record",
-      node_b_id: "node-inspector-tag",
-      description: "Discrepancy between Registered Land Title GPS (23.0238° N) and Field Officer Geo-tag (23.0225° N).",
-      value_a: "23.0238° N, 72.5719° E (Land Registry)",
-      value_b: "23.0225° N, 72.5714° E (Inspector App)",
-      severity: "HIGH",
-      resolved: false
-    }
-  ],
-  candidate_causes: [
-    {
-      id: "cause-pmay-1",
-      hypothesis: "Hardware GPS drift during field inspector photo capture triggered automated GIS plot boundary mismatch.",
-      confidence: 0.97,
-      supporting_evidence_ids: ["doc-pmay-1", "doc-pmay-2"],
-      counter_evidence_ids: [],
-      unknowns: [],
-      causal_chain: ["node-land-title", "node-gps-drift", "node-gis-block", "node-pmay-withheld"],
-      recommended_remedy: "Request Block Development Officer (BDO) geo-tag override with certified Patwari boundary report under PMAY-G Grievance Framework 2024."
-    }
-  ],
-  actions: [
-    {
-      id: "act-pmay-01",
-      action_type: "REPRESENTATION_LETTER",
-      target_institution: "District Rural Development Agency (DRDA) & BDO Office",
-      purpose: "Administrative Re-Verification & Geo-Tag Coordinate Override for PMAY-G Tranche 2",
-      legal_basis: "Ministry of Rural Development PMAY-G Guidelines (Sec 6.4 - Geo-Tag Dispute Resolution)",
-      status: "PENDING_APPROVAL" as ActionStatus,
-      citizen_consent: false,
-      created_at: new Date().toISOString(),
-      response_deadline: 15,
-      generated_content: `REPRESENTATION FOR PMAY-G GEO-TAG CORRECTION
-To: The Project Director, DRDA / Block Development Officer
-Subject: Rectification of Lintel Stage Geo-Tag Coordinates for PMAY-G ID: GJ-2025-PMAY-88192
-
-Beneficiary: Ramesh Kumar
-Scheme: Pradhan Mantri Awaas Yojana - Gramin
-
-1. FACTUAL DISCREPANCY:
-   Lintel inspection photo recorded erroneous coordinates due to mobile device GPS calibration error (140m offset).
-
-2. VERIFIED EVIDENCE:
-   Attached Revenue Land Record (Survey 402/1) and Patwari physical inspection certificate confirming genuine on-site construction.
-
-3. PRAYER:
-   Execute administrative coordinate override on AwaasSoft portal and release 2nd tranche of INR 70,000.00.
-
-Generated by INDRA Administrative Intelligence.`
-    }
-  ],
-  documents: [
-    {
-      id: "doc-pmay-1",
-      filename: "PMAYG_Sanction_and_Inspection_Card.pdf",
-      file_type: "pdf",
-      uploaded_at: "2025-12-05T09:00:00Z",
-      page_count: 1,
-      extractions_count: 3
-    },
-    {
-      id: "doc-pmay-2",
-      filename: "Revenue_Land_Title_Survey_402.pdf",
-      file_type: "pdf",
-      uploaded_at: "2026-01-14T11:20:00Z",
-      page_count: 1,
-      extractions_count: 2
-    }
-  ],
-  nodes: [],
-  edges: [],
-  timeline: [],
-  unknowns: [],
-  created_at: new Date().toISOString(),
-  updated_at: new Date().toISOString()
-};
-
 let localCaseStore: Record<string, Case> = {
   "case-flagship-dbt-8821": { ...MOCK_FLAGSHIP_CASE },
-  "case-epfo-claim-9912": { ...MOCK_EPFO_CASE },
-  "case-pmay-housing-7734": { ...MOCK_PMAY_CASE }
+  "case-epfo-claim-9912": { ...MOCK_EPFO_CASE }
 };
 
 export const api = {
@@ -341,8 +237,7 @@ export const api = {
     } catch (e) {}
     return [
       { id: "dbt_failure", name: "DBT Direct Benefit Transfer", description: "Welfare & scholarship payment blockades (Flagship)" },
-      { id: "epfo_claim", name: "EPFO Pension & PF Claims", description: "Provident fund withdrawal and exit date disputes" },
-      { id: "pmay_housing", name: "PMAY-G Rural Housing Subsidies", description: "Construction tranche release & geo-tag resolution" }
+      { id: "epfo_claim", name: "EPFO Pension & PF Claims", description: "Provident fund withdrawal and exit date disputes" }
     ];
   },
 
@@ -371,11 +266,7 @@ export const api = {
       });
       if (res.ok) return await res.json();
     } catch (e) {}
-    const template = data.domain_id === 'epfo_claim'
-      ? MOCK_EPFO_CASE
-      : data.domain_id === 'pmay_housing'
-      ? MOCK_PMAY_CASE
-      : MOCK_FLAGSHIP_CASE;
+    const template = data.domain_id === 'epfo_claim' ? MOCK_EPFO_CASE : MOCK_FLAGSHIP_CASE;
     const newCase = { ...template };
     newCase.id = `case-${Date.now()}`;
     newCase.title = data.title;
@@ -486,38 +377,43 @@ export const api = {
     } catch (e) {}
 
     const c = localCaseStore[caseId] || localCaseStore["case-flagship-dbt-8821"];
-    if (c.domain_id === 'pmay_housing') {
+    if (c.domain_id === 'epfo_claim') {
       return {
         nodes: [
-          { id: "node-land-title", label: "Land Title Survey 402/1", type: "EVIDENCE", attributes: { parcel: "Survey 402/1", village: "Sanand" }, epistemic_category: "FACT", status: "VERIFIED", confidence: 1.0 },
-          { id: "node-gps-drift", label: "Field Phone 140m GPS Drift", type: "ACTION", attributes: { drift_meters: 140, device: "DRDA App" }, epistemic_category: "FACT", status: "VERIFIED", confidence: 0.96 },
-          { id: "node-gis-block", label: "AwaasSoft Rule PMAY-GEO-04", type: "RULE", attributes: { code: "PMAY-GEO-04", threshold: "50m" }, epistemic_category: "RULE", status: "APPLIED", confidence: 1.0 },
-          { id: "node-pmay-withheld", label: "₹70,000 Tranche 2 Withheld", type: "EVENT", attributes: { tranche: 2, amount: 70000 }, epistemic_category: "FACT", status: "VERIFIED", confidence: 1.0 }
+          { id: "node-relieving", label: "Relieving Certificate (2025-10-31)", type: "EVIDENCE", attributes: { document: "Relieving Letter", exit_date: "2025-10-31" }, epistemic_category: "FACT", status: "VERIFIED", confidence: 1.0 },
+          { id: "node-ecr-conflict", label: "Employer ECR Return (2025-11-15)", type: "EVIDENCE", attributes: { document: "ECR Return", exit_date: "2025-11-15" }, epistemic_category: "FACT", status: "VERIFIED", confidence: 1.0 },
+          { id: "node-epfo-rejection", label: "EPFO Rejection Rule EPF-R09", type: "RULE", attributes: { rule: "EPF-R09", reason: "Exit Date Mismatch" }, epistemic_category: "RULE", status: "APPLIED", confidence: 1.0 },
+          { id: "node-joint-declaration", label: "Joint Declaration Action", type: "ACTION", attributes: { sop: "v3.0", sla: "15d" }, epistemic_category: "FACT", status: "DRAFTED", confidence: 0.96 }
         ],
         edges: [
-          { id: "e-p1", source_id: "node-land-title", target_id: "node-gps-drift", label: "CONTRADICTS_COORDINATES", type: "CONTRADICTS", attributes: {}, confidence: 1.0 },
-          { id: "e-p2", source_id: "node-gps-drift", target_id: "node-gis-block", label: "TRIGGERS_REJECTION_RULE", type: "CAUSED_BY", attributes: {}, confidence: 1.0 },
-          { id: "e-p3", source_id: "node-gis-block", target_id: "node-pmay-withheld", label: "HALTS_DISBURSAL", type: "CAUSED_BY", attributes: {}, confidence: 1.0 }
+          { id: "e-ep1", source_id: "node-relieving", target_id: "node-ecr-conflict", label: "CONTRADICTS_EXIT_DATE", type: "CONTRADICTS", attributes: {}, confidence: 1.0 },
+          { id: "e-ep2", source_id: "node-ecr-conflict", target_id: "node-epfo-rejection", label: "TRIGGERS_REJECTION", type: "CAUSED_BY", attributes: {}, confidence: 1.0 },
+          { id: "e-ep3", source_id: "node-epfo-rejection", target_id: "node-joint-declaration", label: "REQUIRES_RECTIFICATION", type: "CAUSED_BY", attributes: {}, confidence: 1.0 }
         ],
-        stats: { total_nodes: 4, total_edges: 3, facts_count: 3, inferences_count: 0, rules_count: 1, contradictions_count: 1 }
+        stats: { total_nodes: 4, total_edges: 3, facts_count: 2, inferences_count: 0, rules_count: 1, contradictions_count: 1 }
       };
     }
 
+    // Flagship DBT Complete Causal Graph
     return {
       nodes: [
-        { id: "node-cyber-notice", label: "Police Notice #CR-4412", type: "EVIDENCE", attributes: { authority: "Cyber Crime Cell", section: "102 CrPC" }, epistemic_category: "FACT", status: "VERIFIED", confidence: 1.0 },
-        { id: "node-canara-freeze", label: "Canara Account Debit Freeze", type: "ACTION", attributes: { bank: "Canara Bank", account: "*4401" }, epistemic_category: "FACT", status: "VERIFIED", confidence: 1.0 },
-        { id: "node-npci-mapper", label: "NPCI APBS Mapper Inactive", type: "TRANSACTION", attributes: { mapper_status: "INACTIVE" }, epistemic_category: "SYSTEM_OBSERVATION", status: "VERIFIED", confidence: 0.98 },
-        { id: "node-pfms-rejection", label: "PFMS Rejection Error BNS-410", type: "RULE", attributes: { code: "BNS-410", treasury: "Central PFMS" }, epistemic_category: "RULE", status: "APPLIED", confidence: 1.0 },
-        { id: "node-scholarship-loss", label: "₹48,000 Scholarship Withheld", type: "EVENT", attributes: { amount: 48000, student: "Aakash Verma" }, epistemic_category: "FACT", status: "VERIFIED", confidence: 1.0 }
+        { id: "node-scholarship-approved", label: "Scholarship Approved (₹48,000)", type: "EVENT", attributes: { scheme: "Post-Matric", amount: 48000 }, epistemic_category: "FACT", status: "VERIFIED", confidence: 1.0 },
+        { id: "node-payment-attempt", label: "Central PFMS Payment Attempt", type: "TRANSACTION", attributes: { gateway: "PFMS Central", batch: "BT-99120" }, epistemic_category: "EVENT", status: "VERIFIED", confidence: 1.0 },
+        { id: "node-pfms-rejection", label: "PFMS Rejection (Error BNS-410)", type: "RULE", attributes: { error_code: "BNS-410", meaning: "Account Inactive/Restricted" }, epistemic_category: "RULE", status: "APPLIED", confidence: 1.0 },
+        { id: "node-npci-mapper", label: "NPCI APBS Mapper Status = INACTIVE", type: "TRANSACTION", attributes: { mapper_status: "INACTIVE", routing: "Canara *4401" }, epistemic_category: "SYSTEM_OBSERVATION", status: "VERIFIED", confidence: 0.98 },
+        { id: "node-canara-freeze", label: "Canara Bank Account Restricting Freeze", type: "ACTION", attributes: { bank: "Canara Bank", account: "*4401", notice: "Sec 102 CrPC" }, epistemic_category: "FACT", status: "VERIFIED", confidence: 1.0 },
+        { id: "node-root-cause", label: "Root Cause: Upstream Police Freeze Inactivated APBS", type: "DEPENDENCY", attributes: { confidence: 0.94, hypothesis: "Police requisition triggered cascade" }, epistemic_category: "INFERENCE", status: "VERIFIED", confidence: 0.94 },
+        { id: "node-remedial-action", label: "Remedial Action: APBS Remap to Active SBI Account", type: "ACTION", attributes: { target: "State Bank of India", account: "*8812" }, epistemic_category: "ACTION", status: "PENDING_APPROVAL", confidence: 0.96 }
       ],
       edges: [
-        { id: "e1", source_id: "node-cyber-notice", target_id: "node-canara-freeze", label: "TRIGGERS_FREEZE", type: "CAUSED_BY", attributes: {}, confidence: 1.0 },
-        { id: "e2", source_id: "node-canara-freeze", target_id: "node-npci-mapper", label: "INVALIDATES_MAPPER", type: "CAUSED_BY", attributes: {}, confidence: 1.0 },
-        { id: "e3", source_id: "node-npci-mapper", target_id: "node-pfms-rejection", label: "CAUSES_REJECTION", type: "CAUSED_BY", attributes: {}, confidence: 1.0 },
-        { id: "e4", source_id: "node-pfms-rejection", target_id: "node-scholarship-loss", label: "BLOCKS_DISBURSAL", type: "CAUSED_BY", attributes: {}, confidence: 1.0 }
+        { id: "e1", source_id: "node-scholarship-approved", target_id: "node-payment-attempt", label: "INITIATES_DISBURSAL", type: "CAUSED_BY", attributes: {}, confidence: 1.0 },
+        { id: "e2", source_id: "node-payment-attempt", target_id: "node-pfms-rejection", label: "FAILS_WITH_ERROR", type: "CAUSED_BY", attributes: {}, confidence: 1.0 },
+        { id: "e3", source_id: "node-pfms-rejection", target_id: "node-npci-mapper", label: "CAUSED_BY_INACTIVE_MAPPER", type: "DEPENDS_ON", attributes: {}, confidence: 1.0 },
+        { id: "e4", source_id: "node-npci-mapper", target_id: "node-canara-freeze", label: "RESULT_OF_BANK_FREEZE", type: "CAUSED_BY", attributes: {}, confidence: 1.0 },
+        { id: "e5", source_id: "node-canara-freeze", target_id: "node-root-cause", label: "IDENTIFIED_AS_ROOT_CAUSE", type: "PROVES", attributes: {}, confidence: 0.94 },
+        { id: "e6", source_id: "node-root-cause", target_id: "node-remedial-action", label: "GENERATES_ACTION", type: "REQUIRES", attributes: {}, confidence: 0.96 }
       ],
-      stats: { total_nodes: 5, total_edges: 4, facts_count: 3, inferences_count: 0, rules_count: 1, contradictions_count: 0 }
+      stats: { total_nodes: 7, total_edges: 6, facts_count: 3, inferences_count: 1, rules_count: 1, contradictions_count: 0 }
     };
   },
 
@@ -528,8 +424,7 @@ export const api = {
     } catch (e) {}
     localCaseStore = {
       "case-flagship-dbt-8821": { ...MOCK_FLAGSHIP_CASE },
-      "case-epfo-claim-9912": { ...MOCK_EPFO_CASE },
-      "case-pmay-housing-7734": { ...MOCK_PMAY_CASE }
+      "case-epfo-claim-9912": { ...MOCK_EPFO_CASE }
     };
     return { status: "RESET" };
   }

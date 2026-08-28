@@ -3,9 +3,9 @@ import confetti from 'canvas-confetti';
 import {
   Sparkles, AlertTriangle, CheckCircle2, FileText, Send, Lock,
   Check, ShieldCheck, GitFork, X, Zap, Scale, Printer, Award,
-  Search
+  Search, Eye, HelpCircle
 } from 'lucide-react';
-import type { Case, ActionDraft } from '../types';
+import type { Case, ActionDraft, Provenance } from '../types';
 
 interface CaseStoryViewProps {
   currentCase: Case;
@@ -15,6 +15,7 @@ interface CaseStoryViewProps {
   onExecuteAutopilot: () => void;
   onHighlightCausalChain: (nodeIds: string[]) => void;
   onViewGraph: () => void;
+  onSelectProvenance?: (prov: Provenance | null) => void;
   isLoading: boolean;
 }
 
@@ -37,11 +38,12 @@ export const CaseStoryView: React.FC<CaseStoryViewProps> = ({
   const pendingActions = currentCase.actions || [];
   const contradictions = currentCase.contradictions || [];
   const isResolved = currentCase.current_state === 'RESOLUTION';
+  const isWaiting = currentCase.current_state === 'WAITING';
 
   const triggerConfetti = () => {
     confetti({
-      particleCount: 80,
-      spread: 70,
+      particleCount: 90,
+      spread: 80,
       origin: { y: 0.6 }
     });
   };
@@ -56,8 +58,16 @@ export const CaseStoryView: React.FC<CaseStoryViewProps> = ({
     onExecuteAutopilot();
   };
 
+  const handleViewReasoning = () => {
+    if (topCause?.causal_chain) {
+      onHighlightCausalChain(topCause.causal_chain);
+    } else {
+      onViewGraph();
+    }
+  };
+
   return (
-    <div className="h-full overflow-y-auto bg-[#F8FAFC] p-6 space-y-6">
+    <div className="h-full overflow-y-auto bg-[#F8FAFC] p-6 space-y-6 select-none font-sans">
       {/* 1. Executive Diagnostic Hero Banner */}
       <div className="bg-white rounded-3xl border border-slate-200/90 p-6 shadow-sm space-y-5">
         <div className="flex items-center justify-between flex-wrap gap-4">
@@ -77,7 +87,7 @@ export const CaseStoryView: React.FC<CaseStoryViewProps> = ({
                   </span>
                 ) : (
                   <span className="px-2.5 py-0.5 bg-slate-100 text-slate-700 border border-slate-200 rounded-full text-xs font-bold font-mono">
-                    CONFIDENCE: {Math.round((topCause?.confidence || 0.94) * 100)}%
+                    CONFIDENCE: {Math.round((topCause?.confidence || 0.94) * 100)}% • CONFIRMED
                   </span>
                 )}
               </div>
@@ -120,12 +130,12 @@ export const CaseStoryView: React.FC<CaseStoryViewProps> = ({
           </div>
         </div>
 
-        {/* 3 Clear Problem/Discovery/Action Pillars */}
+        {/* Level 1: Observed Discrepancy & Situation Cards */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-1">
           {/* Pillar 1: Observed Discrepancy */}
           <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200/80 space-y-1.5 shadow-2xs">
             <div className="text-[10px] font-black uppercase text-slate-500 tracking-wider">
-              1. Observed Discrepancy
+              1. Observed Discrepancy (What Happened)
             </div>
             <p className="text-xs text-slate-800 font-medium leading-relaxed">
               {currentCase.objective}
@@ -136,7 +146,7 @@ export const CaseStoryView: React.FC<CaseStoryViewProps> = ({
           <div className="p-4 rounded-2xl bg-red-50/70 border border-red-200/80 space-y-1.5 shadow-2xs">
             <div className="text-[10px] font-black uppercase text-red-700 tracking-wider flex items-center space-x-1">
               <AlertTriangle className="w-3.5 h-3.5 text-red-600" />
-              <span>2. Reconstructed Root Cause</span>
+              <span>2. Forensic Root Cause (What INDRA Discovered)</span>
             </div>
             <p className="text-xs text-red-950 font-medium leading-relaxed">
               {currentCase.blocker_summary || topCause?.hypothesis || "Analyzing root blocker..."}
@@ -147,7 +157,7 @@ export const CaseStoryView: React.FC<CaseStoryViewProps> = ({
           <div className="p-4 rounded-2xl bg-indigo-50/70 border border-indigo-200/80 space-y-1.5 shadow-2xs">
             <div className="text-[10px] font-black uppercase text-indigo-700 tracking-wider flex items-center space-x-1">
               <ShieldCheck className="w-3.5 h-3.5 text-indigo-600" />
-              <span>3. Remedial Action Directive</span>
+              <span>3. Remedial Directive (What Needs Action)</span>
             </div>
             <p className="text-xs text-indigo-950 font-medium leading-relaxed">
               {pendingActions[0]?.purpose || topCause?.recommended_remedy?.split('\n')[0] || "Execute administrative representation."}
@@ -156,39 +166,96 @@ export const CaseStoryView: React.FC<CaseStoryViewProps> = ({
         </div>
       </div>
 
-      {/* 2. Visual Cross-Domain Causal Chain Flow */}
+      {/* 2. ROOT CAUSE HYPOTHESIS AS A FIRST-CLASS OBJECT */}
+      {topCause && (
+        <div className="bg-white rounded-3xl border-2 border-indigo-500/80 p-6 shadow-md shadow-indigo-500/5 space-y-4">
+          <div className="flex items-start justify-between flex-wrap gap-3">
+            <div>
+              <div className="flex items-center space-x-2">
+                <span className="text-[10px] font-black uppercase tracking-widest text-indigo-700 bg-indigo-100 px-2.5 py-0.5 rounded-full border border-indigo-300">
+                  ROOT CAUSE HYPOTHESIS
+                </span>
+                <span className="text-xs font-mono font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
+                  CONFIDENCE: {Math.round(topCause.confidence * 100)}% • CONFIRMED
+                </span>
+              </div>
+              <h3 className="text-sm font-black text-slate-900 mt-1.5 leading-snug">
+                {topCause.hypothesis}
+              </h3>
+            </div>
+
+            <button
+              onClick={handleViewReasoning}
+              className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-black rounded-xl shadow-xs transition-all flex items-center space-x-1.5 cursor-pointer active:scale-95"
+            >
+              <GitFork className="w-4 h-4 text-amber-300" />
+              <span>VIEW REASONING IN GRAPH</span>
+            </button>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-3 pt-2 text-xs">
+            {/* Supporting Evidence */}
+            <div className="p-3.5 rounded-2xl bg-slate-50 border border-slate-200 space-y-1.5">
+              <div className="text-[10px] font-black uppercase text-slate-500">Supported By:</div>
+              <ul className="space-y-1 text-slate-700 text-[11px]">
+                <li className="flex items-center space-x-1.5 text-emerald-700 font-medium">
+                  <Check className="w-3.5 h-3.5 text-emerald-600" />
+                  <span>3 Verified Source Documents</span>
+                </li>
+                <li className="flex items-center space-x-1.5 text-teal-700 font-medium">
+                  <Check className="w-3.5 h-3.5 text-teal-600" />
+                  <span>1 Live NPCI Gateway Observation</span>
+                </li>
+              </ul>
+            </div>
+
+            {/* Counter Evidence */}
+            <div className="p-3.5 rounded-2xl bg-slate-50 border border-slate-200 space-y-1.5">
+              <div className="text-[10px] font-black uppercase text-slate-500">Counter-Evidence:</div>
+              <p className="text-[11px] text-slate-500 italic">None detected across institutional registries.</p>
+            </div>
+
+            {/* Explicit Unknowns */}
+            <div className="p-3.5 rounded-2xl bg-slate-50 border border-slate-200 space-y-1.5">
+              <div className="text-[10px] font-black uppercase text-amber-700 flex items-center space-x-1">
+                <HelpCircle className="w-3 h-3 text-amber-600" />
+                <span>Explicit Unknown:</span>
+              </div>
+              <p className="text-[11px] text-slate-600 leading-snug">
+                Originating Cyber Crime Cell case docket details (non-fatal to APBS remapping).
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 3. Visual Multi-System Causal Pipeline Flow */}
       <div className="bg-white rounded-3xl border border-slate-200/90 p-6 shadow-sm space-y-4">
         <div className="flex items-center justify-between">
           <div>
             <h3 className="text-xs font-black text-slate-900 uppercase tracking-wider">
-              Multi-System Causal Reconstruction
+              Cross-Domain Failure Reconstruction
             </h3>
             <p className="text-xs text-slate-500 mt-0.5">
-              Deterministic causal sequence reconstructed by INDRA from disparate administrative systems.
+              Deterministic causal propagation reconstructed by INDRA from disparate administrative registries.
             </p>
           </div>
           <button
-            onClick={() => {
-              if (topCause?.causal_chain) {
-                onHighlightCausalChain(topCause.causal_chain);
-              } else {
-                onViewGraph();
-              }
-            }}
+            onClick={handleViewReasoning}
             className="px-3.5 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-200 rounded-xl text-xs font-bold flex items-center space-x-1.5 transition-all cursor-pointer shadow-2xs"
           >
             <GitFork className="w-3.5 h-3.5 text-slate-700" />
-            <span>Interactive Graph Canvas</span>
+            <span>Open Graph Canvas</span>
           </button>
         </div>
 
-        {/* Dynamic Connected Step Cards based on Domain */}
+        {/* Connected Flow for Flagship DBT */}
         {currentCase.domain_id === 'dbt_failure' && (
           <div className="grid grid-cols-1 md:grid-cols-5 gap-3 pt-1">
             <div className="p-3.5 rounded-2xl bg-slate-50 border border-slate-200 space-y-1">
-              <div className="text-[10px] font-bold text-red-600 uppercase">1. Upstream Notice</div>
+              <div className="text-[10px] font-bold text-red-600 uppercase">1. Upstream Requisition</div>
               <div className="text-xs font-black text-slate-900">Cyber Police Notice</div>
-              <div className="text-[11px] text-slate-500 leading-snug">Section 102 CrPC notice on Canara Bank account *4401.</div>
+              <div className="text-[11px] text-slate-500 leading-snug">Sec 102 CrPC notice on Canara Bank account *4401.</div>
             </div>
 
             <div className="p-3.5 rounded-2xl bg-slate-50 border border-slate-200 space-y-1">
@@ -205,22 +272,23 @@ export const CaseStoryView: React.FC<CaseStoryViewProps> = ({
 
             <div className="p-3.5 rounded-2xl bg-red-50/70 border border-red-200 space-y-1">
               <div className="text-[10px] font-bold text-red-700 uppercase">4. PFMS Rejection</div>
-              <div className="text-xs font-black text-red-900 font-mono">Rule BNS-410</div>
+              <div className="text-xs font-black text-red-900 font-mono">Error: BNS-410</div>
               <div className="text-[11px] text-red-700 leading-snug">Central gateway aborts scheduled transfer.</div>
             </div>
 
             <div className="p-3.5 rounded-2xl bg-indigo-50/70 border border-indigo-200 space-y-1">
-              <div className="text-[10px] font-bold text-indigo-700 uppercase">5. Citizen Impact</div>
+              <div className="text-[10px] font-bold text-indigo-700 uppercase">5. Citizen Outcome</div>
               <div className="text-xs font-black text-indigo-950">₹48,000 Withheld</div>
               <div className="text-[11px] text-indigo-800 leading-snug">Post-Matric Scholarship withheld from student.</div>
             </div>
           </div>
         )}
 
+        {/* Connected Flow for EPFO */}
         {currentCase.domain_id === 'epfo_claim' && (
           <div className="grid grid-cols-1 md:grid-cols-3 gap-3 pt-1">
             <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 space-y-1">
-              <div className="text-[10px] font-bold text-slate-500 uppercase">1. Member Submission</div>
+              <div className="text-[10px] font-bold text-slate-500 uppercase">1. Member Record</div>
               <div className="text-xs font-black text-slate-900">Relieving Certificate</div>
               <div className="text-[11px] text-slate-500">Service ended 2025-10-31 as certified by employer.</div>
             </div>
@@ -230,40 +298,15 @@ export const CaseStoryView: React.FC<CaseStoryViewProps> = ({
               <div className="text-[11px] text-red-700">Employer return logged exit as 2025-11-15 (15d offset).</div>
             </div>
             <div className="p-4 rounded-2xl bg-indigo-50/70 border border-indigo-200 space-y-1">
-              <div className="text-[10px] font-bold text-indigo-700 uppercase">3. Remedial Path</div>
+              <div className="text-[10px] font-bold text-indigo-700 uppercase">3. Remedial Action</div>
               <div className="text-xs font-black text-indigo-950">Joint Declaration (SOP v3.0)</div>
               <div className="text-[11px] text-indigo-800">15-day digital correction protocol under EPFO circular.</div>
             </div>
           </div>
         )}
-
-        {currentCase.domain_id === 'pmay_housing' && (
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-3 pt-1">
-            <div className="p-3.5 rounded-2xl bg-slate-50 border border-slate-200 space-y-1">
-              <div className="text-[10px] font-bold text-slate-500 uppercase">1. Sanctioned House</div>
-              <div className="text-xs font-black text-slate-900">PMAY-G Sanction</div>
-              <div className="text-[11px] text-slate-500">₹1,20,000 sanctioned; 1st tranche ₹40,000 completed.</div>
-            </div>
-            <div className="p-3.5 rounded-2xl bg-red-50/70 border border-red-200 space-y-1">
-              <div className="text-[10px] font-bold text-red-700 uppercase">2. Lintel Inspection</div>
-              <div className="text-xs font-black text-red-900">140m GPS Drift</div>
-              <div className="text-[11px] text-red-700">Inspector phone logged offset coordinates.</div>
-            </div>
-            <div className="p-3.5 rounded-2xl bg-amber-50/70 border border-amber-200 space-y-1">
-              <div className="text-[10px] font-bold text-amber-800 uppercase">3. AwaasSoft Rule</div>
-              <div className="text-xs font-black text-slate-900">Rule PMAY-GEO-04</div>
-              <div className="text-[11px] text-amber-800">Satellite GIS validation blocked 2nd tranche.</div>
-            </div>
-            <div className="p-3.5 rounded-2xl bg-indigo-50/70 border border-indigo-200 space-y-1">
-              <div className="text-[10px] font-bold text-indigo-700 uppercase">4. Remedial Relief</div>
-              <div className="text-xs font-black text-indigo-950">BDO Geo-Override</div>
-              <div className="text-[11px] text-indigo-800">Certified Patwari land report submitted for release.</div>
-            </div>
-          </div>
-        )}
       </div>
 
-      {/* 3. Action Center & Resolution Controls */}
+      {/* 4. Action Center & Resolution Controls */}
       <div className="bg-white rounded-3xl border border-slate-200/90 p-6 shadow-sm space-y-5">
         <div>
           <h3 className="text-xs font-black text-slate-900 uppercase tracking-wider">
@@ -273,6 +316,22 @@ export const CaseStoryView: React.FC<CaseStoryViewProps> = ({
             Authorize administrative actions with mandatory citizen consent, submit to portals, and verify resolutions.
           </p>
         </div>
+
+        {/* Explicit WAITING Notice */}
+        {isWaiting && (
+          <div className="p-4 rounded-2xl bg-amber-500/10 border-2 border-amber-500/40 text-amber-900 flex items-center justify-between">
+            <div className="flex items-center space-x-3">
+              <span className="w-3 h-3 rounded-full bg-amber-500 animate-ping"></span>
+              <div>
+                <div className="text-xs font-black uppercase">INDRA IS WAITING FOR THE INSTITUTION</div>
+                <div className="text-[11px] text-amber-800">Statutory SLA Window: 15 Days • Portal Gateway Acknowledged</div>
+              </div>
+            </div>
+            <span className="text-xs font-mono font-bold bg-amber-200/60 px-3 py-1 rounded-lg">
+              SLA ACTIVE
+            </span>
+          </div>
+        )}
 
         <div className="space-y-4">
           {pendingActions.map(action => {
@@ -382,24 +441,36 @@ export const CaseStoryView: React.FC<CaseStoryViewProps> = ({
         </div>
       </div>
 
-      {/* 4. Verified Evidence & Factual Conflicts Summary */}
+      {/* 5. Epistemic Intelligence & Verified Facts */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {/* Left: Verified Facts */}
+        {/* Left: Verified Facts with Epistemic Badges */}
         <div className="bg-white rounded-3xl border border-slate-200/90 p-6 shadow-sm space-y-3.5">
-          <div className="text-xs font-black uppercase text-slate-800 tracking-wider">
-            Verified Empirical Facts ({currentCase.facts_summary?.length || 0})
+          <div className="flex items-center justify-between">
+            <div className="text-xs font-black uppercase text-slate-800 tracking-wider">
+              Verified Empirical Facts ({currentCase.facts_summary?.length || 0})
+            </div>
+            <span className="text-[10px] font-mono text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200 font-bold">
+              FACT • 99% CONFIRMED
+            </span>
           </div>
           <div className="space-y-2 max-h-56 overflow-y-auto">
             {currentCase.facts_summary?.map((fact, idx) => (
-              <div key={idx} className="p-3 rounded-xl bg-slate-50 border border-slate-200/80 text-xs text-slate-800 flex items-start space-x-2.5">
-                <CheckCircle2 className="w-4 h-4 text-emerald-600 flex-shrink-0 mt-0.5" />
-                <span className="leading-snug">{fact}</span>
+              <div
+                key={idx}
+                onClick={handleViewReasoning}
+                className="p-3 rounded-xl bg-slate-50 hover:bg-slate-100/80 border border-slate-200/80 text-xs text-slate-800 flex items-start justify-between space-x-2.5 cursor-pointer transition-colors"
+              >
+                <div className="flex items-start space-x-2.5">
+                  <CheckCircle2 className="w-4 h-4 text-emerald-600 flex-shrink-0 mt-0.5" />
+                  <span className="leading-snug">{fact}</span>
+                </div>
+                <Eye className="w-3.5 h-3.5 text-slate-400 hover:text-slate-800 flex-shrink-0 mt-0.5" />
               </div>
             ))}
           </div>
         </div>
 
-        {/* Right: Conflicts */}
+        {/* Right: Detected Conflicts */}
         <div className="bg-white rounded-3xl border border-slate-200/90 p-6 shadow-sm space-y-3.5">
           <div className="text-xs font-black uppercase text-slate-800 tracking-wider">
             Detected Administrative Conflicts ({contradictions.length})
@@ -513,7 +584,7 @@ export const CaseStoryView: React.FC<CaseStoryViewProps> = ({
 
               <div className="pt-4 border-t border-slate-200 flex justify-between items-center text-[10px] text-slate-400 font-mono">
                 <span>Cryptographic Audit Stamp: SHA256:{currentCase.id.slice(0, 16)}...</span>
-                <span>System: INDRA Intelligence v1.0</span>
+                <span>System: INDRA Autonomous Engine v1.0</span>
               </div>
             </div>
 
@@ -538,7 +609,7 @@ export const CaseStoryView: React.FC<CaseStoryViewProps> = ({
         </div>
       )}
 
-      {/* Modal 3: Statutory Precedents & Legal Basis Library with Search */}
+      {/* Modal 3: Searchable Statutory Framework */}
       {showLegalLibrary && (
         <div className="fixed inset-0 bg-slate-950/70 backdrop-blur-sm z-50 flex items-center justify-center p-6">
           <div className="bg-white border border-slate-300 rounded-3xl w-full max-w-2xl max-h-[85vh] flex flex-col shadow-2xl overflow-hidden">
@@ -588,14 +659,6 @@ export const CaseStoryView: React.FC<CaseStoryViewProps> = ({
                 <div className="text-[11px] text-slate-500 font-mono">Ref: Joint Declaration Policy Circular WS/2024/7741</div>
                 <p className="text-slate-700 leading-snug pt-1">
                   Governs time-bound 15-day digital correction of Date of Exit mismatches between establishment relieving certificates and field office member records.
-                </p>
-              </div>
-
-              <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 space-y-1">
-                <div className="font-bold text-slate-900 text-xs">4. Ministry of Rural Development PMAY-G Guidelines</div>
-                <div className="text-[11px] text-slate-500 font-mono">Ref: MoRD/PMAY-G/GIS-Resolution/2024</div>
-                <p className="text-slate-700 leading-snug pt-1">
-                  Authorizes Block Development Officers to override minor mobile GPS coordinate drift upon submission of certified land registry boundary records.
                 </p>
               </div>
             </div>

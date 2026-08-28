@@ -6,28 +6,22 @@ interface LoginScreenProps {
 }
 
 export const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin }) => {
-  const [selectedProfile, setSelectedProfile] = useState<'dbt' | 'epfo' | 'pmay'>('dbt');
+  const [selectedProfile, setSelectedProfile] = useState<'dbt' | 'epfo'>('dbt');
 
-  const handleEnter = (domain: 'dbt_failure' | 'epfo_claim' | 'pmay_housing') => {
+  const handleEnter = (domain: 'dbt_failure' | 'epfo_claim') => {
     localStorage.setItem('indra_auth', 'true');
     localStorage.setItem('indra_domain', domain);
     onLogin(domain);
   };
 
-  const domainMap: Record<'dbt' | 'epfo' | 'pmay', 'dbt_failure' | 'epfo_claim' | 'pmay_housing'> = {
-    dbt: 'dbt_failure',
-    epfo: 'epfo_claim',
-    pmay: 'pmay_housing'
-  };
-
   return (
     <div className="h-screen w-screen bg-radial from-slate-900 via-slate-950 to-black flex flex-col items-center justify-center p-6 select-none font-sans text-slate-100 relative overflow-hidden">
-      {/* Subtle Background Glows */}
+      {/* Background Ambient Glows */}
       <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-indigo-600/10 rounded-full blur-3xl pointer-events-none"></div>
       <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-amber-500/10 rounded-full blur-3xl pointer-events-none"></div>
 
       {/* Top National Infrastructure Badge */}
-      <div className="w-full max-w-2xl mb-5 flex items-center justify-between text-xs text-slate-400 font-medium px-2">
+      <div className="w-full max-w-xl mb-5 flex items-center justify-between text-xs text-slate-400 font-medium px-2">
         <div className="flex items-center space-x-2.5">
           <div className="w-6 h-6 rounded-lg bg-amber-500/20 border border-amber-500/40 flex items-center justify-center">
             <Building2 className="w-3.5 h-3.5 text-amber-400" />
@@ -44,8 +38,8 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin }) => {
         </div>
       </div>
 
-      {/* Main Glassmorphism Terminal Card */}
-      <div className="w-full max-w-2xl bg-slate-900/90 border border-slate-800 rounded-3xl shadow-2xl p-8 space-y-6 backdrop-blur-xl relative z-10">
+      {/* Main Terminal Card */}
+      <div className="w-full max-w-xl bg-slate-900/90 border border-slate-800 rounded-3xl shadow-2xl p-8 space-y-6 backdrop-blur-xl relative z-10">
         {/* Header */}
         <div className="border-b border-slate-800 pb-5">
           <div className="flex items-center justify-between">
@@ -57,11 +51,11 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin }) => {
                 <div className="flex items-center space-x-2">
                   <h1 className="font-black text-xl tracking-tight text-white">INDRA</h1>
                   <span className="text-[10px] font-extrabold px-2 py-0.5 bg-amber-400/10 text-amber-300 rounded-md border border-amber-400/30">
-                    ENTERPRISE RECONSTRUCTION
+                    CORE
                   </span>
                 </div>
                 <p className="text-xs text-slate-400 font-medium mt-0.5">
-                  Autonomous Citizen Case Intelligence & Administrative Agency System
+                  Autonomous Causal Execution Engine for Fragmented Public Services
                 </p>
               </div>
             </div>
@@ -73,16 +67,16 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin }) => {
           </div>
         </div>
 
-        {/* Profile Selector - 3 Interactive Case Profiles */}
+        {/* Profile Selector - 2 Exact Authentic Domains */}
         <div className="space-y-3">
           <div className="flex items-center justify-between">
             <label className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">
-              Select Citizen Case Profile
+              Select Evaluation Profile
             </label>
-            <span className="text-[10px] text-slate-500">Click a profile to preview</span>
+            <span className="text-[10px] text-slate-500">1-Click Direct Entry</span>
           </div>
 
-          <div className="grid grid-cols-1 gap-2.5">
+          <div className="grid grid-cols-1 gap-3">
             {/* Profile 1: Flagship DBT */}
             <div
               onClick={() => setSelectedProfile('dbt')}
@@ -100,14 +94,14 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin }) => {
                   </span>
                 </div>
                 <div className="text-xs text-slate-300 font-medium">
-                  Post-Matric Scholarship Gateway Blockade & Cyber Police Freeze
+                  Post-Matric Scholarship Disbursal Blockade & Cyber Police Freeze
                 </div>
                 <div className="text-[11px] text-slate-500 flex items-center space-x-2">
                   <span>Cyber Crime Notice</span>
                   <span>•</span>
                   <span>Canara Bank Freeze</span>
                   <span>•</span>
-                  <span>NPCI APBS Rejection BNS-410</span>
+                  <span>NPCI APBS Error BNS-410</span>
                 </div>
               </div>
 
@@ -131,14 +125,14 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin }) => {
                 <div className="flex items-center space-x-2.5">
                   <span className="font-bold text-sm text-white">Pooja Sharma</span>
                   <span className="text-[10px] font-black uppercase bg-indigo-500/20 text-indigo-300 px-2 py-0.5 rounded border border-indigo-500/40">
-                    EPFO PENSION & PF
+                    EPFO DOMAIN GENERALIZATION
                   </span>
                 </div>
                 <div className="text-xs text-slate-300 font-medium">
                   Form 19 Final PF Settlement Rejection
                 </div>
                 <div className="text-[11px] text-slate-500 flex items-center space-x-2">
-                  <span>Exit Date Discrepancy</span>
+                  <span>Date of Exit Discrepancy</span>
                   <span>•</span>
                   <span>Employer ECR Contradiction</span>
                   <span>•</span>
@@ -152,62 +146,25 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin }) => {
                 {selectedProfile === 'epfo' && <CheckCircle2 className="w-3.5 h-3.5 text-slate-950 stroke-[3]" />}
               </div>
             </div>
-
-            {/* Profile 3: PMAY */}
-            <div
-              onClick={() => setSelectedProfile('pmay')}
-              className={`p-4 rounded-2xl border cursor-pointer transition-all flex items-start justify-between ${
-                selectedProfile === 'pmay'
-                  ? 'bg-slate-800/90 border-emerald-500/80 ring-1 ring-emerald-500/60 shadow-lg shadow-emerald-500/5'
-                  : 'bg-slate-950/60 border-slate-800 hover:border-slate-700'
-              }`}
-            >
-              <div className="space-y-1.5">
-                <div className="flex items-center space-x-2.5">
-                  <span className="font-bold text-sm text-white">Ramesh Kumar</span>
-                  <span className="text-[10px] font-black uppercase bg-emerald-500/20 text-emerald-300 px-2 py-0.5 rounded border border-emerald-500/40">
-                    PMAY-G HOUSING (₹1,20,000)
-                  </span>
-                </div>
-                <div className="text-xs text-slate-300 font-medium">
-                  Rural Housing 2nd Tranche Geo-Tag Coordinate Blockade
-                </div>
-                <div className="text-[11px] text-slate-500 flex items-center space-x-2">
-                  <span>140m Phone GPS Drift</span>
-                  <span>•</span>
-                  <span>AwaasSoft Rule GEO-04</span>
-                  <span>•</span>
-                  <span>Patwari Land Title Survey</span>
-                </div>
-              </div>
-
-              <div className={`w-5 h-5 rounded-full border flex items-center justify-center mt-1 ${
-                selectedProfile === 'pmay' ? 'border-emerald-400 bg-emerald-500' : 'border-slate-700'
-              }`}>
-                {selectedProfile === 'pmay' && <CheckCircle2 className="w-3.5 h-3.5 text-slate-950 stroke-[3]" />}
-              </div>
-            </div>
           </div>
         </div>
 
         {/* 1-Click Entry CTA */}
         <button
-          onClick={() => handleEnter(domainMap[selectedProfile])}
+          onClick={() => handleEnter(selectedProfile === 'dbt' ? 'dbt_failure' : 'epfo_claim')}
           className="w-full py-4 bg-gradient-to-r from-amber-500 via-amber-400 to-amber-500 hover:from-amber-400 hover:to-amber-300 text-slate-950 rounded-2xl text-xs font-black tracking-widest uppercase flex items-center justify-center space-x-2.5 transition-all shadow-xl shadow-amber-500/20 active:scale-98 cursor-pointer"
         >
-          <span>
-            Enter Workspace ({selectedProfile === 'dbt' ? 'Aakash Verma' : selectedProfile === 'epfo' ? 'Pooja Sharma' : 'Ramesh Kumar'})
-          </span>
+          <span>Enter Workspace ({selectedProfile === 'dbt' ? 'Aakash Verma' : 'Pooja Sharma'})</span>
           <ArrowRight className="w-4 h-4 text-slate-950 stroke-[3]" />
         </button>
 
-        {/* Footer Audit Stamp */}
+        {/* Footer Safety Notice */}
         <div className="pt-2 border-t border-slate-800/80 flex items-center justify-between text-[11px] text-slate-500 font-medium">
           <span className="flex items-center space-x-1.5">
             <Lock className="w-3 h-3 text-slate-400" />
-            <span>Zero Real PII Required • 100% Synthetic Sandbox</span>
+            <span>Synthetic Case • Mock Government Institutions</span>
           </span>
-          <span className="font-mono text-slate-400">SHA256:882144019912</span>
+          <span className="font-mono text-slate-400">ZERO REAL PII</span>
         </div>
       </div>
     </div>

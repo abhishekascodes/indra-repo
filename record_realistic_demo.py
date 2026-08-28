@@ -170,13 +170,18 @@ def run_realistic_demo_recording():
         if doc_buttons.count() >= 2:
             human_click(page, doc_buttons.nth(1), post_pause=1.5)
 
-        # Step 10: Switch to Second Domain EPFO & Clean Exit (00:54 - 00:58)
-        epfo_btn = page.locator("button:has-text('[2] EPFO PF Claim Rejection')")
-        print("[54s] Switching to Second Domain (EPFO)...")
+        # Step 10: Switch to Second Domain EPFO (00:52 - 00:55)
+        epfo_btn = page.locator("button:has-text('[2] EPFO')")
+        print("[52s] Switching to Second Domain (EPFO)...")
         human_click(page, epfo_btn, post_pause=2.0)
 
+        # Step 11: Switch to Third Domain PMAY Housing (00:55 - 00:58)
+        pmay_btn = page.locator("button:has-text('[3] PMAY')")
+        print("[55s] Switching to Third Domain (PMAY-G Housing)...")
+        human_click(page, pmay_btn, post_pause=2.0)
+
         logout_btn = page.locator("button[title='Log Out (Return to Demo Login)']")
-        print("[57s] Logging out to Sandbox Gateway...")
+        print("[58s] Logging out to Sandbox Gateway...")
         human_click(page, logout_btn, post_pause=1.5)
 
         page.close()

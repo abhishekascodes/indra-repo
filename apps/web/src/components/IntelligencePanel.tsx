@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import {
-  Brain, AlertTriangle, CheckCircle,
+  Brain, AlertTriangle, CheckCircle2,
   FileText, Send, Lock, Check, Sparkles, X, GitFork
 } from 'lucide-react';
 import type { Case, CandidateCause, ActionDraft } from '../types';
@@ -24,7 +24,7 @@ export const IntelligencePanel: React.FC<IntelligencePanelProps> = ({
   highlightedChainNodeIds = [],
   isLoading,
 }) => {
-  const [activeTab, setActiveTab] = useState<'root_cause' | 'contradictions' | 'actions' | 'facts' | 'pipeline'>('actions');
+  const [activeTab, setActiveTab] = useState<'action_center' | 'why_indra'>('action_center');
   const [viewingLetterAction, setViewingLetterAction] = useState<ActionDraft | null>(null);
 
   const topCause: CandidateCause | undefined = currentCase.candidate_causes?.[0];
@@ -32,102 +32,73 @@ export const IntelligencePanel: React.FC<IntelligencePanelProps> = ({
   const contradictions = currentCase.contradictions || [];
 
   return (
-    <div className="h-full flex flex-col bg-[#F8FAFC] border-l border-slate-300 select-none font-mono">
-      {/* Bloomberg Header */}
-      <div className="px-4 py-2.5 bg-white border-b border-slate-300 flex items-center justify-between shadow-xs">
+    <div className="h-full flex flex-col bg-white border-l border-slate-200 select-none">
+      {/* Header */}
+      <div className="px-5 py-3.5 border-b border-slate-200 flex items-center justify-between">
         <div className="flex items-center space-x-2">
-          <Brain className="w-4 h-4 text-slate-800" />
-          <h2 className="text-xs font-bold uppercase tracking-wider text-slate-900">INTELLIGENCE TERMINAL</h2>
+          <Brain className="w-4 h-4 text-purple-600" />
+          <h2 className="text-xs font-bold uppercase tracking-wider text-slate-800">
+            Case Intelligence & Action
+          </h2>
         </div>
-        <div className="flex items-center space-x-1">
-          {contradictions.length > 0 && (
-            <span className="text-[10px] bg-red-50 text-red-700 border border-red-300 px-2 py-0.5 rounded font-bold flex items-center space-x-1">
-              <AlertTriangle className="w-3 h-3 text-red-600" />
-              <span>{contradictions.length} CONFLICTS</span>
-            </span>
-          )}
-        </div>
+        {contradictions.length > 0 && (
+          <span className="text-[11px] bg-red-50 text-red-700 border border-red-200 px-2 py-0.5 rounded-full font-semibold flex items-center space-x-1">
+            <AlertTriangle className="w-3 h-3 text-red-500" />
+            <span>{contradictions.length} Conflict{contradictions.length > 1 ? 's' : ''} Detected</span>
+          </span>
+        )}
       </div>
 
-      {/* Case Situation Banner */}
-      <div className="p-3 bg-slate-50 border-b border-slate-200">
-        <div className="text-[9px] uppercase text-slate-500 font-bold tracking-wider mb-1 flex items-center space-x-1">
-          <Sparkles className="w-3 h-3 text-amber-600" />
-          <span>CASE OBJECTIVE & RECONSTRUCTION</span>
+      {/* Case Situation Hero Card */}
+      <div className="p-4 bg-gradient-to-br from-slate-50 to-indigo-50/40 border-b border-slate-200">
+        <div className="text-[10px] uppercase text-indigo-700 font-bold tracking-wider mb-1 flex items-center space-x-1">
+          <Sparkles className="w-3.5 h-3.5 text-indigo-600" />
+          <span>Case Synthesis</span>
         </div>
-        <p className="text-xs text-slate-900 font-semibold leading-relaxed font-sans">
+        <p className="text-xs font-semibold text-slate-900 leading-snug">
           {currentCase.objective}
         </p>
+
         {currentCase.blocker_summary && (
-          <div className="mt-2 p-2 rounded bg-red-50 border border-red-200 text-[10px] text-red-900 font-mono">
-            <span className="font-bold text-red-700">ROOT BLOCKER: </span>
-            {currentCase.blocker_summary}
+          <div className="mt-2.5 p-2.5 rounded-lg bg-red-50/80 border border-red-200 text-xs text-red-900 space-y-0.5">
+            <div className="text-[10px] uppercase font-bold text-red-700">Root Blocker Identified:</div>
+            <div className="leading-snug">{currentCase.blocker_summary}</div>
           </div>
         )}
       </div>
 
-      {/* Navigation Tabs */}
-      <div className="flex border-b border-slate-300 bg-white text-[10px]">
+      {/* Clean 2-Tab Selector */}
+      <div className="flex border-b border-slate-200 bg-slate-50 text-xs font-semibold">
         <button
-          onClick={() => setActiveTab('actions')}
-          className={`flex-1 py-2 font-bold transition-all border-b-2 ${
-            activeTab === 'actions'
-              ? 'border-slate-900 text-slate-900 bg-slate-50'
+          onClick={() => setActiveTab('action_center')}
+          className={`flex-1 py-2.5 transition-all border-b-2 ${
+            activeTab === 'action_center'
+              ? 'border-indigo-600 text-indigo-700 bg-white'
               : 'border-transparent text-slate-500 hover:text-slate-900'
           }`}
         >
-          ACTIONS ({pendingActions.length})
+          1. Next Action ({pendingActions.length})
         </button>
         <button
-          onClick={() => setActiveTab('root_cause')}
-          className={`flex-1 py-2 font-bold transition-all border-b-2 ${
-            activeTab === 'root_cause'
-              ? 'border-slate-900 text-slate-900 bg-slate-50'
+          onClick={() => setActiveTab('why_indra')}
+          className={`flex-1 py-2.5 transition-all border-b-2 ${
+            activeTab === 'why_indra'
+              ? 'border-indigo-600 text-indigo-700 bg-white'
               : 'border-transparent text-slate-500 hover:text-slate-900'
           }`}
         >
-          ROOT CAUSE
-        </button>
-        <button
-          onClick={() => setActiveTab('contradictions')}
-          className={`flex-1 py-2 font-bold transition-all border-b-2 ${
-            activeTab === 'contradictions'
-              ? 'border-red-600 text-red-700 bg-red-50/50'
-              : 'border-transparent text-slate-500 hover:text-slate-900'
-          }`}
-        >
-          CONFLICTS ({contradictions.length})
-        </button>
-        <button
-          onClick={() => setActiveTab('facts')}
-          className={`flex-1 py-2 font-bold transition-all border-b-2 ${
-            activeTab === 'facts'
-              ? 'border-slate-900 text-slate-900 bg-slate-50'
-              : 'border-transparent text-slate-500 hover:text-slate-900'
-          }`}
-        >
-          FACTS ({currentCase.facts_summary?.length || 0})
-        </button>
-        <button
-          onClick={() => setActiveTab('pipeline')}
-          className={`flex-1 py-2 font-bold transition-all border-b-2 ${
-            activeTab === 'pipeline'
-              ? 'border-indigo-600 text-indigo-700 bg-indigo-50/50'
-              : 'border-transparent text-slate-500 hover:text-slate-900'
-          }`}
-        >
-          PIPELINE
+          2. Root Cause & Evidence
         </button>
       </div>
 
-      {/* Tab Content Body */}
-      <div className="flex-1 p-3 overflow-y-auto space-y-2.5 bg-[#F8FAFC]">
+      {/* Body Content */}
+      <div className="flex-1 p-4 overflow-y-auto space-y-4 bg-slate-50/50">
         {/* TAB 1: ACTION CENTER */}
-        {activeTab === 'actions' && (
-          <div className="space-y-2.5">
+        {activeTab === 'action_center' && (
+          <div className="space-y-3">
             {pendingActions.length === 0 ? (
-              <div className="p-4 text-center text-xs text-slate-500 font-mono">
-                NO ADMINISTRATIVE ACTIONS REQUIRED
+              <div className="p-6 text-center text-xs text-slate-500 bg-white rounded-xl border border-slate-200">
+                No administrative actions currently required.
               </div>
             ) : (
               pendingActions.map(action => {
@@ -137,77 +108,79 @@ export const IntelligencePanel: React.FC<IntelligencePanelProps> = ({
                 return (
                   <div
                     key={action.id}
-                    className="p-3 rounded border border-slate-300 bg-white hover:border-slate-400 transition-all space-y-2.5 shadow-2xs"
+                    className="p-4 rounded-xl border border-slate-200 bg-white shadow-xs space-y-3"
                   >
-                    {/* Action Header */}
+                    {/* Header */}
                     <div className="flex items-start justify-between">
                       <div>
-                        <span className="text-[9px] font-bold uppercase tracking-wider text-amber-800 bg-amber-100 px-1.5 py-0.5 rounded border border-amber-300">
-                          {action.action_type}
+                        <span className="text-[10px] font-bold uppercase tracking-wider text-indigo-700 bg-indigo-50 px-2 py-0.5 rounded border border-indigo-200">
+                          {action.action_type.replace(/_/g, ' ')}
                         </span>
-                        <h4 className="text-xs font-bold text-slate-900 mt-1 font-sans">{action.purpose}</h4>
-                        <div className="text-[10px] text-slate-500 mt-0.5">
+                        <h4 className="text-sm font-bold text-slate-900 mt-1.5">{action.purpose}</h4>
+                        <div className="text-xs text-slate-500 mt-0.5">
                           Target: <span className="text-slate-800 font-semibold">{action.target_institution}</span>
                         </div>
                       </div>
 
-                      <span className={`text-[9px] px-1.5 py-0.5 rounded font-bold uppercase ${
+                      <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold uppercase ${
                         isSubmitted
                           ? 'bg-cyan-50 text-cyan-800 border border-cyan-300'
                           : isApproved
                           ? 'bg-emerald-50 text-emerald-800 border border-emerald-300'
                           : 'bg-amber-50 text-amber-800 border border-amber-300'
                       }`}>
-                        {action.status}
+                        {action.status.replace(/_/g, ' ')}
                       </span>
                     </div>
 
-                    {/* Preview Generated Letter Button */}
+                    {/* View Draft Letter */}
                     <div className="flex items-center justify-between text-xs pt-1">
                       <button
                         onClick={() => setViewingLetterAction(action)}
-                        className="text-amber-700 hover:text-amber-900 flex items-center space-x-1 font-bold transition-colors text-[10px]"
+                        className="text-indigo-600 hover:text-indigo-800 flex items-center space-x-1 font-semibold transition-colors"
                       >
-                        <FileText className="w-3.5 h-3.5 text-amber-600" />
-                        <span>INSPECT DRAFT PETITION</span>
+                        <FileText className="w-3.5 h-3.5" />
+                        <span>Inspect Draft Petition Dossier</span>
                       </button>
 
-                      <span className="text-[9px] text-slate-500">
-                        SLA: {action.response_deadline || 15}D
+                      <span className="text-[11px] text-slate-500 font-mono">
+                        SLA: {action.response_deadline || 15} Days
                       </span>
                     </div>
 
-                    {/* Citizen Consent & Submission Controls */}
-                    <div className="pt-2 border-t border-slate-200 flex items-center justify-between">
+                    {/* 2 Big Clear Buttons */}
+                    <div className="pt-2 border-t border-slate-100 flex items-center space-x-2">
+                      {/* Step 1: Consent Toggle */}
                       <button
                         onClick={() => onGrantConsent(action.id, !action.citizen_consent)}
                         disabled={isSubmitted || isLoading}
-                        className={`px-2.5 py-1 rounded text-[10px] font-bold flex items-center space-x-1 transition-all ${
+                        className={`flex-1 py-2 rounded-lg text-xs font-bold flex items-center justify-center space-x-1.5 transition-all shadow-2xs ${
                           action.citizen_consent
-                            ? 'bg-emerald-50 text-emerald-800 border border-emerald-400'
-                            : 'bg-slate-100 text-slate-700 border border-slate-300 hover:bg-slate-200'
+                            ? 'bg-emerald-600 text-white hover:bg-emerald-700'
+                            : 'bg-slate-100 text-slate-700 hover:bg-slate-200 border border-slate-300'
                         }`}
                       >
                         {action.citizen_consent ? (
                           <>
-                            <Check className="w-3 h-3 text-emerald-700" />
-                            <span>CONSENT GRANTED</span>
+                            <Check className="w-3.5 h-3.5" />
+                            <span>Consent Granted</span>
                           </>
                         ) : (
                           <>
-                            <Lock className="w-3 h-3 text-slate-500" />
-                            <span>AUTHORIZE ACTION</span>
+                            <Lock className="w-3.5 h-3.5" />
+                            <span>1. Authorize Action</span>
                           </>
                         )}
                       </button>
 
+                      {/* Step 2: Submit */}
                       <button
                         onClick={() => onSubmitAction(action.id)}
                         disabled={!action.citizen_consent || isSubmitted || isLoading}
-                        className="px-3 py-1 bg-slate-900 hover:bg-slate-800 disabled:opacity-40 disabled:pointer-events-none text-white rounded text-[10px] font-bold flex items-center space-x-1 transition-all shadow-xs active:scale-95"
+                        className="flex-1 py-2 bg-slate-900 hover:bg-slate-800 disabled:opacity-40 disabled:pointer-events-none text-white rounded-lg text-xs font-bold flex items-center justify-center space-x-1.5 transition-all shadow-2xs active:scale-95"
                       >
-                        <Send className="w-3 h-3 text-amber-400" />
-                        <span>{isSubmitted ? 'SUBMITTED' : 'SUBMIT PORTAL'}</span>
+                        <Send className="w-3.5 h-3.5 text-amber-400" />
+                        <span>{isSubmitted ? 'Submitted' : '2. Submit to Portal'}</span>
                       </button>
                     </div>
                   </div>
@@ -215,160 +188,104 @@ export const IntelligencePanel: React.FC<IntelligencePanelProps> = ({
               })
             )}
 
-            {/* Resolve Complete Chain Trigger (DBT Flagship) */}
+            {/* Resolve Cycle (PFMS Flagship) */}
             {currentCase.domain_id === 'dbt_failure' && (
-              <div className="p-3 rounded bg-emerald-50/70 border border-emerald-300 space-y-2 mt-3">
-                <div className="flex items-center space-x-1.5 text-xs font-bold text-emerald-800">
-                  <CheckCircle className="w-4 h-4 text-emerald-700" />
-                  <span>EXECUTE PFMS RECOVERY CYCLE</span>
+              <div className="p-3.5 rounded-xl bg-emerald-50 border border-emerald-200 space-y-2 mt-4 shadow-xs">
+                <div className="flex items-center space-x-1.5 text-xs font-bold text-emerald-900">
+                  <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+                  <span>Execute PFMS Disbursal Recovery Cycle</span>
                 </div>
-                <p className="text-[10px] text-slate-700 leading-relaxed font-sans">
-                  Re-validates updated NPCI mapper state and triggers mock PFMS central payment retry to finalize benefit credit.
+                <p className="text-xs text-emerald-800 leading-snug">
+                  Re-validates active NPCI mapping and triggers mock central PFMS payment retry to credit the ₹48,000 scholarship.
                 </p>
                 <button
                   onClick={onResolveChain}
                   disabled={isLoading}
-                  className="w-full py-1.5 bg-emerald-700 hover:bg-emerald-800 text-white rounded text-xs font-bold transition-all shadow-xs active:scale-98"
+                  className="w-full py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-bold transition-all shadow-xs active:scale-98"
                 >
-                  VERIFY & DISBURSE BENEFIT
+                  Verify & Execute PFMS Disbursal
                 </button>
               </div>
             )}
           </div>
         )}
 
-        {/* TAB 2: ROOT CAUSE */}
-        {activeTab === 'root_cause' && (
-          <div className="space-y-2.5">
-            {topCause ? (
-              <div className="p-3 rounded border border-purple-300 bg-purple-50/40 space-y-2.5">
+        {/* TAB 2: WHY INDRA BELIEVES THIS */}
+        {activeTab === 'why_indra' && (
+          <div className="space-y-3">
+            {/* Root Cause Card */}
+            {topCause && (
+              <div className="p-4 rounded-xl border border-purple-200 bg-purple-50/40 space-y-2.5 shadow-xs">
                 <div className="flex items-center justify-between">
-                  <span className="text-[9px] font-bold uppercase text-purple-800 bg-purple-100 px-1.5 py-0.5 rounded border border-purple-300">
-                    CANDIDATE ROOT CAUSE
+                  <span className="text-[10px] font-bold uppercase text-purple-800 bg-purple-100 px-2 py-0.5 rounded border border-purple-200">
+                    Causal Hypothesis
                   </span>
-                  <span className="text-xs font-bold text-purple-900">
-                    {Math.round(topCause.confidence * 100)}% CONFIDENCE
+                  <span className="text-xs font-bold text-purple-900 font-mono">
+                    {Math.round(topCause.confidence * 100)}% Confidence
                   </span>
                 </div>
 
-                <p className="text-xs text-slate-900 leading-relaxed font-sans font-medium">
+                <p className="text-xs text-slate-800 leading-relaxed font-medium">
                   {topCause.hypothesis}
                 </p>
 
-                {/* Highlight Causal Chain in Graph Action */}
                 {topCause.causal_chain && topCause.causal_chain.length > 0 && (
                   <button
                     onClick={() => onHighlightCausalChain(topCause.causal_chain)}
-                    className="w-full py-1 bg-purple-700 hover:bg-purple-800 text-white rounded text-[10px] font-bold flex items-center justify-center space-x-1.5 transition-all shadow-xs active:scale-98"
+                    className="w-full py-1.5 bg-purple-600 hover:bg-purple-700 text-white rounded-lg text-xs font-bold flex items-center justify-center space-x-1.5 transition-all shadow-xs"
                   >
-                    <GitFork className="w-3 h-3" />
+                    <GitFork className="w-3.5 h-3.5" />
                     <span>
                       {highlightedChainNodeIds.length > 0
-                        ? 'CAUSAL CHAIN ILLUMINATED IN GRAPH'
-                        : 'ILLUMINATE CAUSAL CHAIN IN GRAPH'}
+                        ? 'Causal Path Highlighted in Graph'
+                        : 'Highlight Causal Path in Graph'}
                     </span>
                   </button>
                 )}
 
                 {topCause.recommended_remedy && (
-                  <div className="p-2 rounded bg-white border border-slate-200 text-[10px] text-slate-800 space-y-1">
-                    <div className="font-bold text-slate-900 uppercase text-[9px]">RECOMMENDED REMEDY</div>
-                    <div className="whitespace-pre-line text-slate-700 font-sans">{topCause.recommended_remedy}</div>
-                  </div>
-                )}
-
-                {topCause.unknowns && topCause.unknowns.length > 0 && (
-                  <div className="p-2 rounded bg-white border border-slate-200 text-[10px] text-slate-600 space-y-1">
-                    <div className="font-bold text-amber-700 uppercase text-[9px]">UNCERTAINTIES & UNKNOWNS</div>
-                    <ul className="list-disc list-inside space-y-0.5 font-sans">
-                      {topCause.unknowns.map((u, i) => (
-                        <li key={i} className="text-slate-700">{u}</li>
-                      ))}
-                    </ul>
+                  <div className="p-2.5 rounded-lg bg-white border border-slate-200 text-xs text-slate-800 space-y-1">
+                    <div className="font-bold text-slate-900 text-[10px] uppercase tracking-wider">Recommended Remedy</div>
+                    <div className="whitespace-pre-line text-slate-700 text-[11px]">{topCause.recommended_remedy}</div>
                   </div>
                 )}
               </div>
-            ) : (
-              <div className="p-4 text-center text-xs text-slate-500 font-mono">NO ROOT CAUSE FORMULATED</div>
             )}
-          </div>
-        )}
 
-        {/* TAB 3: CONTRADICTIONS */}
-        {activeTab === 'contradictions' && (
-          <div className="space-y-2.5">
-            {contradictions.length === 0 ? (
-              <div className="p-4 text-center text-xs text-slate-500 font-mono">NO FACTUAL CONFLICTS DETECTED</div>
-            ) : (
-              contradictions.map(c => (
-                <div
-                  key={c.id}
-                  className="p-3 rounded border border-red-300 bg-red-50/50 space-y-2"
-                >
-                  <div className="flex items-center justify-between">
-                    <span className="text-[9px] uppercase font-bold text-red-800 bg-red-100 px-1.5 py-0.5 rounded border border-red-300">
-                      CONFLICT: {c.field.replace('_', ' ')}
-                    </span>
-                    <span className="text-[8px] px-1.5 py-0.5 rounded bg-red-200 text-red-900 font-bold">
-                      {c.severity} SEVERITY
-                    </span>
-                  </div>
-
-                  <p className="text-xs text-slate-900 leading-snug font-sans">{c.description}</p>
-
-                  <div className="grid grid-cols-2 gap-2 text-[10px] pt-1">
-                    <div className="p-1.5 rounded bg-white border border-slate-200">
-                      <div className="text-[8px] text-slate-400 font-bold">RECORD A</div>
-                      <div className="text-slate-800 truncate font-semibold">{String(c.value_a)}</div>
-                    </div>
-                    <div className="p-1.5 rounded bg-white border border-slate-200">
-                      <div className="text-[8px] text-red-600 font-bold">RECORD B</div>
-                      <div className="text-red-700 truncate font-semibold">{String(c.value_b)}</div>
-                    </div>
-                  </div>
+            {/* Conflicts List */}
+            {contradictions.length > 0 && (
+              <div className="space-y-2">
+                <div className="text-[11px] font-bold text-slate-700 uppercase tracking-wider">
+                  Factual Conflicts ({contradictions.length})
                 </div>
-              ))
-            )}
-          </div>
-        )}
-
-        {/* TAB 4: FACTS */}
-        {activeTab === 'facts' && (
-          <div className="space-y-1">
-            {currentCase.facts_summary?.map((fact, idx) => (
-              <div
-                key={idx}
-                className="p-2 rounded bg-white border border-slate-200 text-[11px] text-slate-800 flex items-start space-x-2 shadow-2xs font-sans"
-              >
-                <CheckCircle className="w-3.5 h-3.5 text-emerald-600 flex-shrink-0 mt-0.5" />
-                <span>{fact}</span>
-              </div>
-            ))}
-          </div>
-        )}
-
-        {/* TAB 5: DISCOVERY PIPELINE */}
-        {activeTab === 'pipeline' && (
-          <div className="space-y-2 font-mono text-xs">
-            <div className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">
-              DISCOVERY RECONSTRUCTION SEQUENCE
-            </div>
-
-            <div className="space-y-1.5">
-              {[
-                { title: '1. Multimodal Evidence Vault', desc: `${currentCase.documents.length} evidence sources ingested with spatial bounding boxes.`, done: true },
-                { title: '2. Structured Facts Extracted', desc: `${currentCase.nodes.filter(n => n.epistemic_category === 'FACT').length} empirical facts validated with provenance.`, done: true },
-                { title: '3. Contradictions Flagged', desc: `${currentCase.contradictions.length} factual/transactional discrepancies detected.`, done: currentCase.contradictions.length > 0 },
-                { title: '4. Domain Rules Reconciled', desc: `Matched statutory guidelines against observed error codes.`, done: true },
-                { title: '5. Causal Root Cause Formulated', desc: topCause ? `Confidence: ${Math.round(topCause.confidence * 100)}%` : 'Pending', done: !!topCause },
-                { title: '6. Procedural Remediation Plan', desc: `${currentCase.actions.length} actionable administrative representations drafted.`, done: currentCase.actions.length > 0 }
-              ].map((step, idx) => (
-                <div key={idx} className="p-2 rounded bg-white border border-slate-200 flex items-start space-x-2">
-                  <Check className="w-3.5 h-3.5 text-emerald-600 flex-shrink-0 mt-0.5" />
-                  <div>
-                    <div className="font-bold text-slate-900 text-[11px]">{step.title}</div>
-                    <div className="text-[10px] text-slate-500 font-sans">{step.desc}</div>
+                {contradictions.map(c => (
+                  <div key={c.id} className="p-3 rounded-lg border border-red-200 bg-red-50/50 space-y-1.5 text-xs">
+                    <div className="font-bold text-red-800">{c.field.replace(/_/g, ' ').toUpperCase()} Conflict</div>
+                    <p className="text-slate-800 leading-snug">{c.description}</p>
+                    <div className="grid grid-cols-2 gap-2 text-[11px] font-mono pt-1">
+                      <div className="p-1.5 rounded bg-white border border-slate-200">
+                        <div className="text-[9px] text-slate-400 font-bold">RECORD A</div>
+                        <div className="text-slate-900 font-semibold">{String(c.value_a)}</div>
+                      </div>
+                      <div className="p-1.5 rounded bg-white border border-slate-200">
+                        <div className="text-[9px] text-red-600 font-bold">RECORD B</div>
+                        <div className="text-red-700 font-semibold">{String(c.value_b)}</div>
+                      </div>
+                    </div>
                   </div>
+                ))}
+              </div>
+            )}
+
+            {/* Verified Facts */}
+            <div className="space-y-1.5">
+              <div className="text-[11px] font-bold text-slate-700 uppercase tracking-wider">
+                Verified Empirical Facts ({currentCase.facts_summary?.length || 0})
+              </div>
+              {currentCase.facts_summary?.map((fact, idx) => (
+                <div key={idx} className="p-2 rounded-lg bg-white border border-slate-200 text-xs text-slate-800 flex items-start space-x-2 shadow-2xs">
+                  <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 flex-shrink-0 mt-0.5" />
+                  <span className="leading-snug">{fact}</span>
                 </div>
               ))}
             </div>
@@ -379,31 +296,31 @@ export const IntelligencePanel: React.FC<IntelligencePanelProps> = ({
       {/* Draft Letter Modal */}
       {viewingLetterAction && (
         <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-50 flex items-center justify-center p-6">
-          <div className="bg-white border border-slate-400 rounded-lg w-full max-w-2xl max-h-[85vh] flex flex-col shadow-xl overflow-hidden font-mono">
-            <div className="px-4 py-3 bg-slate-50 border-b border-slate-300 flex items-center justify-between">
+          <div className="bg-white border border-slate-300 rounded-2xl w-full max-w-2xl max-h-[85vh] flex flex-col shadow-2xl overflow-hidden">
+            <div className="px-5 py-3.5 bg-slate-50 border-b border-slate-200 flex items-center justify-between">
               <div>
-                <h3 className="text-xs font-bold text-slate-900 uppercase">GENERATED ACTION DOSSIER</h3>
-                <p className="text-[10px] text-slate-500 font-sans">{viewingLetterAction.purpose}</p>
+                <h3 className="text-sm font-bold text-slate-900">Generated Action Dossier</h3>
+                <p className="text-xs text-slate-500">{viewingLetterAction.purpose}</p>
               </div>
               <button
                 onClick={() => setViewingLetterAction(null)}
-                className="p-1 text-slate-500 hover:text-slate-900 rounded transition-colors"
+                className="p-1.5 text-slate-400 hover:text-slate-800 rounded-lg transition-colors"
                 title="Close Modal"
               >
                 <X className="w-4 h-4" />
               </button>
             </div>
 
-            <div className="flex-1 p-4 overflow-y-auto font-mono text-xs text-slate-900 whitespace-pre-wrap bg-white m-3 rounded border border-slate-200 leading-relaxed">
+            <div className="flex-1 p-5 overflow-y-auto font-mono text-xs text-slate-900 whitespace-pre-wrap bg-slate-50/50 m-3 rounded-xl border border-slate-200 leading-relaxed shadow-inner">
               {viewingLetterAction.generated_content}
             </div>
 
-            <div className="px-4 py-2.5 bg-slate-50 border-t border-slate-300 flex justify-end">
+            <div className="px-5 py-3 bg-slate-50 border-t border-slate-200 flex justify-end">
               <button
                 onClick={() => setViewingLetterAction(null)}
-                className="px-3 py-1.5 bg-slate-800 hover:bg-slate-900 text-white rounded text-xs font-bold transition-all shadow-xs"
+                className="px-4 py-2 bg-slate-900 hover:bg-slate-800 text-white rounded-lg text-xs font-bold transition-all shadow-xs"
               >
-                CLOSE DOSSIER
+                Close Dossier
               </button>
             </div>
           </div>

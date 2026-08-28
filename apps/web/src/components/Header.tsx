@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import {
   Shield, Clock, Play, RotateCcw, Sliders,
   FilePlus, Hourglass, ChevronDown,
-  Sparkles, Layers, FileText, Volume2, VolumeX, Zap
+  Sparkles, Layers, FileText, Volume2, VolumeX, Zap, LogOut
 } from 'lucide-react';
 import type { Case, AgentState } from '../types';
 
@@ -15,6 +15,7 @@ interface HeaderProps {
   onSimulateEvent: (eventType: string) => void;
   onExecuteAutopilot: () => void;
   onReset: () => void;
+  onLogout: () => void;
   isLoading: boolean;
 }
 
@@ -41,6 +42,7 @@ export const Header: React.FC<HeaderProps> = ({
   onSimulateEvent,
   onExecuteAutopilot,
   onReset,
+  onLogout,
   isLoading,
 }) => {
   const [showDemoMenu, setShowDemoMenu] = useState(false);
@@ -245,6 +247,14 @@ export const Header: React.FC<HeaderProps> = ({
             title="Reset Simulation Environment"
           >
             <RotateCcw className={`w-3.5 h-3.5 ${isLoading ? 'animate-spin' : ''}`} />
+          </button>
+
+          <button
+            onClick={onLogout}
+            className="p-2 bg-white hover:bg-red-50 text-slate-400 hover:text-red-600 border border-slate-200 rounded-lg text-xs transition-all shadow-xs"
+            title="Log Out (Return to Demo Login)"
+          >
+            <LogOut className="w-3.5 h-3.5" />
           </button>
         </div>
       </div>

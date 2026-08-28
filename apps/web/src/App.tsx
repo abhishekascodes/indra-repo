@@ -4,11 +4,15 @@ import { CaseStoryView } from './components/CaseStoryView';
 import { EvidenceVault } from './components/EvidenceVault';
 import { CaseGraphView } from './components/CaseGraphView';
 import { TimelineRail } from './components/TimelineRail';
+import { LoginScreen } from './components/LoginScreen';
 import { api } from './services/api';
 import type { Case, UIGraphData, Provenance } from './types';
 import { CheckCircle2, AlertTriangle, X } from 'lucide-react';
 
 export const App: React.FC = () => {
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(
+    () => localStorage.getItem('indra_auth') === 'true'
+  );
   const [currentCase, setCurrentCase] = useState<Case | null>(null);
   const [graphData, setGraphData] = useState<UIGraphData | null>(null);
   const [activeProvenance, setActiveProvenance] = useState<Provenance | null>(null);
@@ -61,8 +65,10 @@ export const App: React.FC = () => {
   };
 
   useEffect(() => {
-    initializeCase('dbt_failure');
-  }, []);
+    if (isAuthenticated) {
+      initializeCase('dbt_failure');
+    }
+  }, [isAuthenticated]);
 
   // Refresh case state & graph
   const refreshCase = async (caseId: string) => {
@@ -202,6 +208,26 @@ export const App: React.FC = () => {
     }
   };
 
+  const handleLogout = () => {
+    localStorage.removeItem('indra_auth');
+    localStorage.removeItem('indra_citizen');
+    setIsAuthenticated(false);
+    setCurrentCase(null);
+    setGraphData(null);
+    showToast('Logged out of demo session', 'info');
+  };
+
+  // If not authenticated, render Demo Login Screen
+  if (!isAuthenticated) {
+    return (
+      <LoginScreen
+        onLogin={() => {
+          setIsAuthenticated(true);
+        }}
+      />
+    );
+  }
+
   return (
     <div className="h-screen w-screen flex flex-col bg-slate-100 text-slate-900 overflow-hidden font-sans">
       {/* 1. Header Command Bar & Workspace View Switcher */}
@@ -214,6 +240,7 @@ export const App: React.FC = () => {
         onSimulateEvent={handleSimulateEvent}
         onExecuteAutopilot={handleExecuteAutopilot}
         onReset={handleReset}
+        onLogout={handleLogout}
         isLoading={isLoading}
       />
 

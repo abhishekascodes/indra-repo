@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import {
   User, FileText, AlertTriangle, CheckCircle, Zap, Shield, GitCommit,
-  Crosshair, Layers, ArrowRight
+  Crosshair, Layers, ArrowRight, X
 } from 'lucide-react';
 import type { UIGraphData, Provenance } from '../types';
 
@@ -19,8 +19,8 @@ export const CaseGraphView: React.FC<CaseGraphViewProps> = ({
 
   if (!graphData || graphData.nodes.length === 0) {
     return (
-      <div className="h-full flex items-center justify-center bg-[#090C12] text-slate-500 text-xs">
-        Generating typed Case Graph...
+      <div className="h-full flex items-center justify-center bg-[#F1F5F9] text-slate-500 text-xs font-mono">
+        GENERATING CASE GRAPH INTELLIGENCE...
       </div>
     );
   }
@@ -33,72 +33,71 @@ export const CaseGraphView: React.FC<CaseGraphViewProps> = ({
 
   const getNodeIcon = (type: string, category: string) => {
     if (category === 'CONTRADICTION' || type === 'CONTRADICTION') {
-      return <AlertTriangle className="w-4 h-4 text-red-400" />;
+      return <AlertTriangle className="w-3.5 h-3.5 text-red-600" />;
     }
     switch (type) {
       case 'PERSON':
-        return <User className="w-4 h-4 text-blue-400" />;
+        return <User className="w-3.5 h-3.5 text-blue-700" />;
       case 'DOCUMENT':
-        return <FileText className="w-4 h-4 text-amber-400" />;
+        return <FileText className="w-3.5 h-3.5 text-amber-700" />;
       case 'APPLICATION':
-        return <CheckCircle className="w-4 h-4 text-emerald-400" />;
+        return <CheckCircle className="w-3.5 h-3.5 text-emerald-700" />;
       case 'TRANSACTION':
-        return <Zap className="w-4 h-4 text-cyan-400" />;
+        return <Zap className="w-3.5 h-3.5 text-cyan-700" />;
       case 'DEPENDENCY':
-        return <Layers className="w-4 h-4 text-purple-400" />;
+        return <Layers className="w-3.5 h-3.5 text-purple-700" />;
       case 'RULE':
-        return <Shield className="w-4 h-4 text-indigo-400" />;
+        return <Shield className="w-3.5 h-3.5 text-indigo-700" />;
       default:
-        return <GitCommit className="w-4 h-4 text-slate-400" />;
+        return <GitCommit className="w-3.5 h-3.5 text-slate-600" />;
     }
   };
 
   const getCategoryBadgeClass = (category: string) => {
     switch (category) {
       case 'FACT':
-        return 'bg-emerald-950/80 text-emerald-300 border-emerald-700/50';
+        return 'bg-emerald-50 text-emerald-800 border-emerald-300';
       case 'INFERENCE':
-        return 'bg-purple-950/80 text-purple-300 border-purple-700/50';
+        return 'bg-purple-50 text-purple-800 border-purple-300';
       case 'RULE':
-        return 'bg-blue-950/80 text-blue-300 border-blue-700/50';
+        return 'bg-blue-50 text-blue-800 border-blue-300';
       case 'SYSTEM_OBSERVATION':
-        return 'bg-cyan-950/80 text-cyan-300 border-cyan-700/50';
+        return 'bg-teal-50 text-teal-800 border-teal-300';
       case 'USER_ASSERTION':
-        return 'bg-amber-950/80 text-amber-300 border-amber-700/50';
+        return 'bg-amber-50 text-amber-800 border-amber-300';
       default:
-        return 'bg-slate-900 text-slate-400 border-slate-700';
+        return 'bg-slate-100 text-slate-700 border-slate-300';
     }
   };
 
-  // Connected edges for selected node
   const connectedEdges = selectedNode
     ? graphData.edges.filter(e => e.source === selectedNode.id || e.target === selectedNode.id)
     : [];
 
   return (
-    <div className="h-full flex flex-col bg-[#070A10] relative select-none">
-      {/* Top Filter Bar */}
-      <div className="p-3 border-b border-slate-800/80 bg-[#0B0F17] flex items-center justify-between z-10">
+    <div className="h-full flex flex-col bg-[#F1F5F9] relative select-none">
+      {/* Top Bloomberg Terminal Filter Bar */}
+      <div className="px-4 py-2.5 border-b border-slate-300 bg-white flex items-center justify-between z-10 shadow-xs font-mono">
         <div className="flex items-center space-x-2">
-          <Layers className="w-4 h-4 text-indigo-400" />
-          <span className="text-xs font-bold text-slate-200 uppercase tracking-wider">
-            Case Graph Intelligence
+          <Layers className="w-4 h-4 text-slate-800" />
+          <span className="text-xs font-bold text-slate-900 uppercase tracking-wider">
+            CASE GRAPH TOPOLOGY
           </span>
-          <span className="text-[10px] text-slate-400 font-mono">
-            ({graphData.stats.total_nodes} Nodes, {graphData.stats.total_edges} Edges)
+          <span className="text-[10px] text-slate-500">
+            [{graphData.stats.total_nodes} NODES | {graphData.stats.total_edges} EDGES]
           </span>
         </div>
 
         {/* Epistemic Filters */}
-        <div className="flex items-center space-x-1 text-[11px]">
+        <div className="flex items-center space-x-1 text-[10px] font-mono">
           {['ALL', 'FACT', 'INFERENCE', 'RULE', 'SYSTEM_OBSERVATION'].map(cat => (
             <button
               key={cat}
               onClick={() => setCategoryFilter(cat)}
-              className={`px-2.5 py-1 rounded-md transition-all font-medium ${
+              className={`px-2 py-1 rounded-xs transition-all font-bold ${
                 categoryFilter === cat
-                  ? 'bg-blue-600 text-white font-bold'
-                  : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/60'
+                  ? 'bg-slate-900 text-white shadow-xs'
+                  : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
               }`}
             >
               {cat === 'SYSTEM_OBSERVATION' ? 'OBSERVATIONS' : cat}
@@ -107,9 +106,9 @@ export const CaseGraphView: React.FC<CaseGraphViewProps> = ({
         </div>
       </div>
 
-      {/* Main Interactive Graph Canvas Grid */}
-      <div className="flex-1 p-6 overflow-y-auto relative">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+      {/* Main Interactive Graph Grid */}
+      <div className="flex-1 p-4 overflow-y-auto relative">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2.5">
           {filteredNodes.map(node => {
             const isSelected = selectedNodeId === node.id;
             const hasProvenance = !!node.provenance;
@@ -124,37 +123,37 @@ export const CaseGraphView: React.FC<CaseGraphViewProps> = ({
                     onSelectProvenance(node.provenance);
                   }
                 }}
-                className={`p-3.5 rounded-xl border transition-all cursor-pointer relative group ${
+                className={`p-3 rounded border transition-all cursor-pointer relative ${
                   isSelected
-                    ? 'bg-slate-800/90 border-blue-500 shadow-lg shadow-blue-500/20 ring-1 ring-blue-400'
+                    ? 'bg-amber-50/60 border-amber-600 shadow-sm ring-1 ring-amber-500'
                     : isContradiction
-                    ? 'bg-red-950/20 border-red-800/60 hover:border-red-500'
-                    : 'bg-[#10141E]/90 border-slate-800 hover:border-slate-700 hover:bg-[#151B28]'
+                    ? 'bg-red-50/80 border-red-300 hover:border-red-500 shadow-2xs'
+                    : 'bg-white border-slate-300 hover:border-slate-400 hover:bg-slate-50/50 shadow-2xs'
                 }`}
               >
                 {/* Node Top Header */}
-                <div className="flex items-center justify-between mb-2">
-                  <div className="flex items-center space-x-2">
-                    <div className="p-1.5 rounded-lg bg-slate-900 border border-slate-800">
+                <div className="flex items-center justify-between mb-1.5 font-mono">
+                  <div className="flex items-center space-x-1.5">
+                    <div className="p-1 rounded bg-slate-100 border border-slate-200">
                       {getNodeIcon(node.type, node.epistemic_category)}
                     </div>
-                    <span className="text-[10px] font-mono uppercase tracking-wider text-slate-400 font-semibold">
+                    <span className="text-[9px] font-bold uppercase tracking-wider text-slate-500">
                       {node.type}
                     </span>
                   </div>
 
-                  <span className={`text-[9px] font-mono px-2 py-0.5 rounded border font-bold ${getCategoryBadgeClass(node.epistemic_category)}`}>
+                  <span className={`text-[8px] font-mono px-1.5 py-0.2 rounded border font-bold uppercase ${getCategoryBadgeClass(node.epistemic_category)}`}>
                     {node.epistemic_category}
                   </span>
                 </div>
 
                 {/* Node Label */}
-                <div className="text-xs font-semibold text-slate-200 mb-2 leading-snug">
+                <div className="text-xs font-bold text-slate-900 mb-2 leading-tight">
                   {node.label}
                 </div>
 
                 {/* Provenance Footer */}
-                <div className="flex items-center justify-between pt-2 border-t border-slate-800/60 text-[10px]">
+                <div className="flex items-center justify-between pt-1.5 border-t border-slate-200 text-[10px] font-mono">
                   {hasProvenance ? (
                     <button
                       onClick={(e) => {
@@ -162,16 +161,16 @@ export const CaseGraphView: React.FC<CaseGraphViewProps> = ({
                         setSelectedNodeId(node.id);
                         onSelectProvenance(node.provenance);
                       }}
-                      className="text-blue-400 hover:text-blue-300 flex items-center space-x-1 font-medium transition-colors"
+                      className="text-amber-700 hover:text-amber-900 flex items-center space-x-1 font-semibold transition-colors"
                     >
-                      <Crosshair className="w-3 h-3 text-blue-400" />
-                      <span className="truncate max-w-[120px]">{node.provenance.document_name}</span>
+                      <Crosshair className="w-3 h-3 text-amber-600" />
+                      <span className="truncate max-w-[130px]">{node.provenance.document_name}</span>
                     </button>
                   ) : (
-                    <span className="text-slate-500 italic">No direct file</span>
+                    <span className="text-slate-400 italic">SYSTEM DERIVED</span>
                   )}
 
-                  <span className="text-slate-400 font-mono">
+                  <span className="text-slate-600 font-bold">
                     {Math.round((node.confidence || 1.0) * 100)}%
                   </span>
                 </div>
@@ -183,46 +182,47 @@ export const CaseGraphView: React.FC<CaseGraphViewProps> = ({
 
       {/* Node Inspector Bottom Drawer */}
       {selectedNode && (
-        <div className="p-4 bg-[#0D121D] border-t border-slate-800 max-h-56 overflow-y-auto text-xs shadow-2xl z-20">
-          <div className="flex items-start justify-between mb-3">
+        <div className="p-4 bg-white border-t border-slate-300 max-h-56 overflow-y-auto text-xs shadow-lg z-20">
+          <div className="flex items-start justify-between mb-2.5">
             <div>
-              <div className="flex items-center space-x-2">
-                <span className="font-mono text-[10px] uppercase font-bold text-blue-400 bg-blue-950/60 px-2 py-0.5 rounded border border-blue-800/40">
+              <div className="flex items-center space-x-2 font-mono">
+                <span className="text-[9px] uppercase font-bold text-amber-800 bg-amber-100 px-1.5 py-0.5 rounded border border-amber-300">
                   {selectedNode.type}
                 </span>
-                <span className="text-slate-400 font-mono text-[11px]">{selectedNode.id}</span>
+                <span className="text-slate-500 text-[10px]">{selectedNode.id}</span>
               </div>
-              <h3 className="text-sm font-bold text-white mt-1">{selectedNode.label}</h3>
+              <h3 className="text-xs font-bold text-slate-900 mt-1 font-mono">{selectedNode.label}</h3>
             </div>
 
             <div className="flex items-center space-x-2">
               {selectedNode.provenance && (
                 <button
                   onClick={() => onSelectProvenance(selectedNode.provenance)}
-                  className="px-2.5 py-1 bg-blue-600/20 hover:bg-blue-600/30 text-blue-400 border border-blue-500/40 rounded-lg text-xs font-semibold flex items-center space-x-1 transition-all"
+                  className="px-2.5 py-1 bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-300 rounded text-xs font-mono font-bold flex items-center space-x-1 transition-all"
                 >
-                  <Crosshair className="w-3 h-3" />
-                  <span>Highlight in Vault</span>
+                  <Crosshair className="w-3 h-3 text-amber-700" />
+                  <span>VAULT LINK</span>
                 </button>
               )}
               <button
                 onClick={() => setSelectedNodeId(null)}
-                className="text-slate-500 hover:text-slate-300 font-bold px-2"
+                className="p-1 text-slate-400 hover:text-slate-700 rounded transition-colors"
+                title="Close Inspector"
               >
-                ✕
+                <X className="w-4 h-4" />
               </button>
             </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3 font-mono">
             {/* Left: Origin & Rationale */}
-            <div className="space-y-2 bg-[#080B11] p-3 rounded-lg border border-slate-800/80">
-              <div className="text-[10px] uppercase font-bold text-slate-400 tracking-wider">
-                Why this node exists
+            <div className="space-y-1 bg-slate-50 p-2.5 rounded border border-slate-200">
+              <div className="text-[9px] uppercase font-bold text-slate-500 tracking-wider">
+                EPISTEMIC RATIONALE
               </div>
-              <p className="text-slate-300 text-[11px] leading-relaxed">
+              <p className="text-slate-800 text-[10px] leading-relaxed font-sans">
                 {selectedNode.epistemic_category === 'FACT'
-                  ? `Extracted deterministically from evidence record '${selectedNode.provenance?.document_name || 'System'}'. Verifies situational attribute.`
+                  ? `Deterministically extracted from evidence record '${selectedNode.provenance?.document_name || 'System'}'. Direct empirical observation.`
                   : selectedNode.epistemic_category === 'INFERENCE'
                   ? 'Synthesized by the Causal Root-Cause Engine by reconciling administrative rules against observed transaction failures.'
                   : selectedNode.epistemic_category === 'RULE'
@@ -232,19 +232,19 @@ export const CaseGraphView: React.FC<CaseGraphViewProps> = ({
             </div>
 
             {/* Right: Relational Connections */}
-            <div className="space-y-2 bg-[#080B11] p-3 rounded-lg border border-slate-800/80">
-              <div className="text-[10px] uppercase font-bold text-slate-400 tracking-wider">
-                Connected Relationships ({connectedEdges.length})
+            <div className="space-y-1 bg-slate-50 p-2.5 rounded border border-slate-200">
+              <div className="text-[9px] uppercase font-bold text-slate-500 tracking-wider">
+                RELATIONAL CONNECTIONS ({connectedEdges.length})
               </div>
-              <div className="space-y-1 max-h-24 overflow-y-auto">
+              <div className="space-y-1 max-h-20 overflow-y-auto">
                 {connectedEdges.length === 0 ? (
-                  <div className="text-slate-500 italic text-[11px]">No active relational edges.</div>
+                  <div className="text-slate-400 italic text-[10px]">No active relational edges.</div>
                 ) : (
                   connectedEdges.map(e => (
-                    <div key={e.id} className="flex items-center space-x-1.5 text-[11px] text-slate-300">
-                      <span className="font-mono text-indigo-400 font-bold">{e.type}</span>
-                      <ArrowRight className="w-3 h-3 text-slate-600" />
-                      <span className="truncate text-slate-400">{e.source === selectedNode.id ? e.target : e.source}</span>
+                    <div key={e.id} className="flex items-center space-x-1.5 text-[10px] text-slate-700">
+                      <span className="text-amber-700 font-bold">{e.type}</span>
+                      <ArrowRight className="w-3 h-3 text-slate-400" />
+                      <span className="truncate text-slate-600">{e.source === selectedNode.id ? e.target : e.source}</span>
                     </div>
                   ))
                 )}

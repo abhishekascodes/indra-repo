@@ -8,20 +8,20 @@ export default {
     extend: {
       colors: {
         indra: {
-          bg: "#0A0D14",
-          card: "#121722",
-          cardHover: "#1A2232",
-          border: "#1E293B",
-          primary: "#3B82F6",
-          accent: "#6366F1",
-          success: "#10B981",
-          warning: "#F59E0B",
-          danger: "#EF4444",
-          fact: "#10B981",
-          inference: "#8B5CF6",
-          rule: "#3B82F6",
-          contradiction: "#EF4444",
-          observation: "#06B6D4",
+          bg: "#F1F5F9",
+          card: "#FFFFFF",
+          cardHover: "#F8FAFC",
+          border: "#CBD5E1",
+          primary: "#0F172A",
+          accent: "#EA580C", // Bloomberg Orange
+          success: "#059669",
+          warning: "#D97706",
+          danger: "#DC2626",
+          fact: "#059669",
+          inference: "#7C3AED",
+          rule: "#2563EB",
+          contradiction: "#DC2626",
+          observation: "#0D9488",
           unknown: "#64748B"
         }
       }

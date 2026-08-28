@@ -130,7 +130,7 @@ export const App: React.FC = () => {
   };
 
   return (
-    <div className="h-screen w-screen flex flex-col bg-[#080B11] text-slate-100 overflow-hidden font-sans">
+    <div className="h-screen w-screen flex flex-col bg-[#F1F5F9] text-slate-900 overflow-hidden font-sans">
       {/* 1. Header Command Bar */}
       <Header
         currentCase={currentCase}
@@ -151,7 +151,7 @@ export const App: React.FC = () => {
           />
         </div>
 
-        {/* Center: Case Graph Intelligence (45%) */}
+        {/* Center: Case Graph Topology (45%) */}
         <div className="w-[45%] h-full">
           <CaseGraphView
             graphData={graphData}
@@ -173,7 +173,7 @@ export const App: React.FC = () => {
         </div>
       </div>
 
-      {/* 3. Bottom: Case Timeline Rail */}
+      {/* 3. Bottom: Case Chronology Timeline Rail */}
       {currentCase && (
         <TimelineRail
           timeline={currentCase.timeline}

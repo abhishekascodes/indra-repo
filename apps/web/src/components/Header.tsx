@@ -1,5 +1,5 @@
 import React from 'react';
-import { Shield, Clock, Play, RefreshCw, Cpu } from 'lucide-react';
+import { Shield, Clock, Play, RotateCcw, Cpu, ChevronRight } from 'lucide-react';
 import type { Case, AgentState } from '../types';
 
 interface HeaderProps {
@@ -10,18 +10,18 @@ interface HeaderProps {
   isLoading: boolean;
 }
 
-const STATE_COLORS: Record<AgentState, { bg: string; text: string; border: string }> = {
-  CASE_CREATED: { bg: 'bg-blue-950/60', text: 'text-blue-400', border: 'border-blue-700/50' },
-  EVIDENCE_ANALYSIS: { bg: 'bg-indigo-950/60', text: 'text-indigo-400', border: 'border-indigo-700/50' },
-  ACTION_REQUIRED: { bg: 'bg-amber-950/60', text: 'text-amber-400', border: 'border-amber-700/50' },
-  USER_APPROVAL: { bg: 'bg-purple-950/60', text: 'text-purple-400', border: 'border-purple-700/50' },
-  SUBMITTED: { bg: 'bg-cyan-950/60', text: 'text-cyan-400', border: 'border-cyan-700/50' },
-  WAITING: { bg: 'bg-yellow-950/60', text: 'text-yellow-400', border: 'border-yellow-700/50' },
-  RESPONSE_RECEIVED: { bg: 'bg-teal-950/60', text: 'text-teal-400', border: 'border-teal-700/50' },
-  VERIFICATION: { bg: 'bg-emerald-950/60', text: 'text-emerald-400', border: 'border-emerald-700/50' },
-  ESCALATION_REQUIRED: { bg: 'bg-red-950/60', text: 'text-red-400', border: 'border-red-700/50' },
-  RESOLUTION: { bg: 'bg-green-950/60', text: 'text-green-400', border: 'border-green-700/50' },
-  BLOCKED: { bg: 'bg-rose-950/60', text: 'text-rose-400', border: 'border-rose-700/50' },
+const STATE_COLORS: Record<AgentState, { bg: string; text: string; border: string; dot: string }> = {
+  CASE_CREATED: { bg: 'bg-blue-50', text: 'text-blue-700', border: 'border-blue-300', dot: 'bg-blue-600' },
+  EVIDENCE_ANALYSIS: { bg: 'bg-indigo-50', text: 'text-indigo-700', border: 'border-indigo-300', dot: 'bg-indigo-600' },
+  ACTION_REQUIRED: { bg: 'bg-amber-50', text: 'text-amber-700', border: 'border-amber-400', dot: 'bg-amber-600' },
+  USER_APPROVAL: { bg: 'bg-purple-50', text: 'text-purple-700', border: 'border-purple-300', dot: 'bg-purple-600' },
+  SUBMITTED: { bg: 'bg-cyan-50', text: 'text-cyan-800', border: 'border-cyan-300', dot: 'bg-cyan-600' },
+  WAITING: { bg: 'bg-yellow-50', text: 'text-yellow-800', border: 'border-yellow-400', dot: 'bg-yellow-600' },
+  RESPONSE_RECEIVED: { bg: 'bg-teal-50', text: 'text-teal-800', border: 'border-teal-300', dot: 'bg-teal-600' },
+  VERIFICATION: { bg: 'bg-emerald-50', text: 'text-emerald-800', border: 'border-emerald-300', dot: 'bg-emerald-600' },
+  ESCALATION_REQUIRED: { bg: 'bg-red-50', text: 'text-red-700', border: 'border-red-400', dot: 'bg-red-600' },
+  RESOLUTION: { bg: 'bg-green-50', text: 'text-green-800', border: 'border-green-400', dot: 'bg-green-600' },
+  BLOCKED: { bg: 'bg-rose-50', text: 'text-rose-700', border: 'border-rose-300', dot: 'bg-rose-600' },
 };
 
 export const Header: React.FC<HeaderProps> = ({
@@ -32,92 +32,91 @@ export const Header: React.FC<HeaderProps> = ({
   isLoading,
 }) => {
   const stateStyle = currentCase
-    ? STATE_COLORS[currentCase.current_state] || { bg: 'bg-slate-900', text: 'text-slate-300', border: 'border-slate-700' }
-    : { bg: 'bg-slate-900', text: 'text-slate-300', border: 'border-slate-700' };
+    ? STATE_COLORS[currentCase.current_state] || { bg: 'bg-slate-100', text: 'text-slate-700', border: 'border-slate-300', dot: 'bg-slate-500' }
+    : { bg: 'bg-slate-100', text: 'text-slate-700', border: 'border-slate-300', dot: 'bg-slate-500' };
 
   return (
-    <header className="h-16 bg-[#0B0F17] border-b border-slate-800/80 px-6 flex items-center justify-between select-none z-30">
-      {/* Brand & Identity */}
+    <header className="h-14 bg-white border-b border-slate-300 px-5 flex items-center justify-between select-none z-30 shadow-xs">
+      {/* Brand & Bloomberg Terminal Ticker */}
       <div className="flex items-center space-x-4">
         <div className="flex items-center space-x-2.5">
-          <div className="w-9 h-9 rounded-lg bg-gradient-to-tr from-blue-600 via-indigo-500 to-cyan-400 p-0.5 shadow-lg shadow-blue-500/20 flex items-center justify-center">
-            <Shield className="w-5 h-5 text-white" />
+          <div className="w-8 h-8 rounded bg-slate-900 flex items-center justify-center shadow-xs">
+            <Shield className="w-4 h-4 text-amber-500" />
           </div>
           <div>
             <div className="flex items-center space-x-2">
-              <span className="font-black tracking-widest text-lg text-white font-mono">INDRA</span>
-              <span className="text-[10px] uppercase font-bold tracking-wider px-1.5 py-0.5 bg-blue-500/10 text-blue-400 border border-blue-500/20 rounded">
-                v1.0 AGENCY
+              <span className="font-black tracking-widest text-base text-slate-900 font-mono">INDRA</span>
+              <span className="text-[10px] font-mono font-bold tracking-wider px-1.5 py-0.5 bg-amber-500 text-white rounded-xs">
+                TERMINAL
               </span>
             </div>
-            <p className="text-[11px] text-slate-400 font-medium -mt-0.5">Citizen Administrative Intelligence</p>
+            <p className="text-[10px] text-slate-500 font-mono -mt-0.5 tracking-tight">Citizen Administrative Agency</p>
           </div>
         </div>
 
-        {/* Case Switcher Tabs */}
-        <div className="hidden lg:flex items-center bg-slate-900/80 p-1 rounded-lg border border-slate-800 space-x-1 ml-4">
+        <div className="h-6 w-px bg-slate-200 hidden lg:block"></div>
+
+        {/* Domain Switcher */}
+        <div className="hidden lg:flex items-center bg-slate-100 p-0.5 rounded border border-slate-300 space-x-1 font-mono text-xs">
           <button
             onClick={() => onSelectDomain('dbt_failure')}
-            className={`px-3 py-1.5 rounded-md text-xs font-semibold transition-all ${
+            className={`px-3 py-1 rounded-xs font-semibold transition-all ${
               currentCase?.domain_id === 'dbt_failure'
-                ? 'bg-blue-600 text-white shadow-sm'
-                : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/50'
+                ? 'bg-slate-900 text-white shadow-xs'
+                : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200'
             }`}
           >
-            DBT / PFMS Failure (Flagship)
+            [1] DBT/PFMS Gateway
           </button>
           <button
             onClick={() => onSelectDomain('epfo_claim')}
-            className={`px-3 py-1.5 rounded-md text-xs font-semibold transition-all ${
+            className={`px-3 py-1 rounded-xs font-semibold transition-all ${
               currentCase?.domain_id === 'epfo_claim'
-                ? 'bg-indigo-600 text-white shadow-sm'
-                : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/50'
+                ? 'bg-slate-900 text-white shadow-xs'
+                : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200'
             }`}
           >
-            EPFO Exit Date Claim (Domain 2)
+            [2] EPFO Claim Master
           </button>
         </div>
       </div>
 
-      {/* Case Status & Confidence Header */}
+      {/* Case Status & Bloomberg Ticker Bar */}
       {currentCase && (
-        <div className="hidden md:flex items-center space-x-6">
-          {/* Case Identifier */}
-          <div className="text-left">
-            <div className="text-[10px] text-slate-500 uppercase tracking-wider font-semibold">Active Case</div>
-            <div className="text-xs font-mono font-bold text-slate-200 flex items-center space-x-1.5">
-              <span>{currentCase.id}</span>
-              <span className="text-slate-600">•</span>
-              <span className="text-slate-300 font-sans font-medium">{currentCase.citizen_name}</span>
+        <div className="hidden md:flex items-center space-x-5 font-mono">
+          {/* Active Case ID */}
+          <div className="text-left border-r border-slate-200 pr-4">
+            <div className="text-[9px] text-slate-400 uppercase font-bold tracking-wider">CASE ID</div>
+            <div className="text-xs font-bold text-slate-900 flex items-center space-x-1">
+              <span className="text-amber-600">{currentCase.id}</span>
+              <ChevronRight className="w-3 h-3 text-slate-400" />
+              <span className="text-slate-800">{currentCase.citizen_name}</span>
             </div>
           </div>
 
           {/* State Machine Status Badge */}
-          <div className={`px-3 py-1.5 rounded-lg border ${stateStyle.bg} ${stateStyle.border} flex items-center space-x-2`}>
-            <span className="relative flex h-2 w-2">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span>
-              <span className="relative inline-flex rounded-full h-2 w-2 bg-blue-500"></span>
-            </span>
-            <span className={`text-xs font-bold font-mono uppercase tracking-wide ${stateStyle.text}`}>
+          <div className={`px-2.5 py-1 rounded border ${stateStyle.bg} ${stateStyle.border} flex items-center space-x-2`}>
+            <span className={`w-2 h-2 rounded-full ${stateStyle.dot} animate-pulse`}></span>
+            <span className={`text-[11px] font-bold tracking-wide uppercase ${stateStyle.text}`}>
               {currentCase.current_state.replace('_', ' ')}
             </span>
           </div>
 
-          {/* Simulated Day Counter */}
-          <div className="bg-slate-900 border border-slate-800 px-3 py-1.5 rounded-lg flex items-center space-x-2">
-            <Clock className="w-3.5 h-3.5 text-amber-400" />
+          {/* Simulated Clock Counter */}
+          <div className="bg-slate-50 border border-slate-200 px-2.5 py-1 rounded flex items-center space-x-1.5">
+            <Clock className="w-3.5 h-3.5 text-amber-600" />
             <div className="text-xs">
-              <span className="text-slate-400">Day </span>
-              <span className="font-bold text-amber-300 font-mono">{currentCase.simulated_day}</span>
+              <span className="text-slate-500">Day: </span>
+              <span className="font-bold text-slate-900">{currentCase.simulated_day}</span>
             </div>
           </div>
 
-          {/* Confidence Meter */}
-          <div className="bg-slate-900 border border-slate-800 px-3 py-1.5 rounded-lg flex items-center space-x-2">
-            <Cpu className="w-3.5 h-3.5 text-emerald-400" />
+          {/* Confidence Metric */}
+          <div className="bg-slate-50 border border-slate-200 px-2.5 py-1 rounded flex items-center space-x-1.5">
+            <Cpu className="w-3.5 h-3.5 text-emerald-600" />
             <div className="text-xs">
-              <span className="text-slate-400">Confidence: </span>
-              <span className="font-bold text-emerald-400 font-mono">
+              <span className="text-slate-500">Conf: </span>
+              <span className="font-bold text-emerald-700">
                 {Math.round((currentCase.overall_confidence || 0.95) * 100)}%
               </span>
             </div>
@@ -126,26 +125,26 @@ export const Header: React.FC<HeaderProps> = ({
       )}
 
       {/* Action Controls & Fast Forward */}
-      <div className="flex items-center space-x-2.5">
+      <div className="flex items-center space-x-2 font-mono">
         {currentCase && (
           <>
             <button
               onClick={() => onAdvanceTime(5)}
               disabled={isLoading}
-              className="px-2.5 py-1.5 bg-slate-900 hover:bg-slate-800 text-amber-400 hover:text-amber-300 border border-amber-500/30 rounded-lg text-xs font-semibold flex items-center space-x-1.5 transition-all shadow-sm active:scale-95 disabled:opacity-50"
+              className="px-2.5 py-1 bg-white hover:bg-slate-50 text-slate-800 hover:text-slate-900 border border-slate-300 rounded text-xs font-bold flex items-center space-x-1 transition-all shadow-xs active:scale-95 disabled:opacity-50"
               title="Advance simulated clock by 5 days"
             >
-              <Play className="w-3 h-3 fill-amber-400" />
-              <span>+5 Days</span>
+              <Play className="w-3 h-3 text-slate-600 fill-slate-600" />
+              <span>+5D</span>
             </button>
             <button
               onClick={() => onAdvanceTime(15)}
               disabled={isLoading}
-              className="px-3 py-1.5 bg-gradient-to-r from-amber-600 to-amber-700 hover:from-amber-500 hover:to-amber-600 text-white rounded-lg text-xs font-bold flex items-center space-x-1.5 transition-all shadow-md active:scale-95 disabled:opacity-50"
-              title="Fast forward 15 days to test SLA expiry and escalation trigger"
+              className="px-3 py-1 bg-amber-600 hover:bg-amber-700 text-white rounded text-xs font-bold flex items-center space-x-1.5 transition-all shadow-xs active:scale-95 disabled:opacity-50"
+              title="Fast forward 15 days to test statutory SLA expiry"
             >
-              <Play className="w-3.5 h-3.5 fill-white" />
-              <span>Fast-Forward 15d</span>
+              <Play className="w-3 h-3 text-white fill-white" />
+              <span>+15D SLA</span>
             </button>
           </>
         )}
@@ -153,10 +152,10 @@ export const Header: React.FC<HeaderProps> = ({
         <button
           onClick={onReset}
           disabled={isLoading}
-          className="p-2 bg-slate-900 hover:bg-slate-800 text-slate-400 hover:text-slate-200 border border-slate-800 rounded-lg text-xs font-medium transition-all"
-          title="Reset Demo State"
+          className="p-1.5 bg-white hover:bg-slate-100 text-slate-600 hover:text-slate-900 border border-slate-300 rounded text-xs transition-all shadow-xs"
+          title="Reset Environment State"
         >
-          <RefreshCw className={`w-3.5 h-3.5 ${isLoading ? 'animate-spin' : ''}`} />
+          <RotateCcw className={`w-3.5 h-3.5 ${isLoading ? 'animate-spin' : ''}`} />
         </button>
       </div>
     </header>

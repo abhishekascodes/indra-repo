@@ -1,44 +1,48 @@
 @import "tailwindcss";
 
 :root {
-  color-scheme: dark;
+  color-scheme: light;
 }
 
 body {
   margin: 0;
   padding: 0;
-  background-color: #080B11;
-  color: #E2E8F0;
+  background-color: #F1F5F9;
+  color: #0F172A;
   font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
   overflow: hidden;
+  -webkit-font-smoothing: antialiased;
 }
 
-/* Custom scrollbars */
+/* Bloomberg Terminal Style Typography */
+.font-mono-terminal {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+}
+
+/* Custom Bloomberg Light scrollbars */
 ::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
+  width: 5px;
+  height: 5px;
 }
 ::-webkit-scrollbar-track {
-  background: #0D121F;
+  background: #E2E8F0;
 }
 ::-webkit-scrollbar-thumb {
-  background: #1E293B;
-  border-radius: 3px;
+  background: #94A3B8;
+  border-radius: 2px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: #334155;
+  background: #64748B;
 }
 
-/* Glow effects */
-.glow-blue {
-  box-shadow: 0 0 20px -5px rgba(59, 130, 246, 0.4);
+/* Clean Terminal card shadows */
+.terminal-card {
+  background: #FFFFFF;
+  border: 1px solid #CBD5E1;
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.05);
 }
-.glow-purple {
-  box-shadow: 0 0 20px -5px rgba(139, 92, 246, 0.4);
-}
-.glow-red {
-  box-shadow: 0 0 20px -5px rgba(239, 68, 68, 0.4);
-}
-.glow-green {
-  box-shadow: 0 0 20px -5px rgba(16, 185, 129, 0.4);
+
+.terminal-card-hover:hover {
+  border-color: #94A3B8;
+  box-shadow: 0 2px 6px 0 rgba(0, 0, 0, 0.08);
 }

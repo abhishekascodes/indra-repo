@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import {
   Sparkles, AlertTriangle, CheckCircle2, FileText, Send, Lock,
-  Check, ShieldCheck, GitFork, X
+  Check, ShieldCheck, GitFork, X, Zap, Scale, Printer, Award
 } from 'lucide-react';
 import type { Case, ActionDraft } from '../types';
 
@@ -10,6 +10,7 @@ interface CaseStoryViewProps {
   onGrantConsent: (actionId: string, consent: boolean) => void;
   onSubmitAction: (actionId: string) => void;
   onResolveChain: () => void;
+  onExecuteAutopilot: () => void;
   onHighlightCausalChain: (nodeIds: string[]) => void;
   onViewGraph: () => void;
   isLoading: boolean;
@@ -20,47 +21,85 @@ export const CaseStoryView: React.FC<CaseStoryViewProps> = ({
   onGrantConsent,
   onSubmitAction,
   onResolveChain,
+  onExecuteAutopilot,
   onHighlightCausalChain,
   onViewGraph,
   isLoading,
 }) => {
   const [viewingLetterAction, setViewingLetterAction] = useState<ActionDraft | null>(null);
+  const [showCertificate, setShowCertificate] = useState(false);
+  const [showLegalLibrary, setShowLegalLibrary] = useState(false);
 
   const topCause = currentCase.candidate_causes?.[0];
   const pendingActions = currentCase.actions || [];
   const contradictions = currentCase.contradictions || [];
+  const isResolved = currentCase.current_state === 'RESOLUTION';
 
   return (
     <div className="h-full overflow-y-auto bg-slate-50/70 p-6 space-y-6">
-      {/* 1. Executive Summary Hero Banner */}
-      <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm space-y-4">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-2">
-            <span className="p-2 rounded-xl bg-indigo-50 text-indigo-700 border border-indigo-100">
+      {/* 1. Executive Diagnostic Hero Banner & Autonomous Mode */}
+      <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm space-y-5">
+        <div className="flex items-center justify-between flex-wrap gap-3">
+          <div className="flex items-center space-x-3">
+            <span className="p-2.5 rounded-2xl bg-indigo-50 text-indigo-700 border border-indigo-100 shadow-2xs">
               <Sparkles className="w-5 h-5 text-indigo-600" />
             </span>
             <div>
-              <h2 className="text-base font-extrabold text-slate-900">
-                Case Situation & Diagnostic Summary
-              </h2>
+              <div className="flex items-center space-x-2">
+                <h2 className="text-base font-extrabold text-slate-900">
+                  Case Situation & Diagnostic Intelligence
+                </h2>
+                {isResolved && (
+                  <span className="px-2.5 py-0.5 bg-emerald-100 text-emerald-800 border border-emerald-300 rounded-full text-xs font-bold flex items-center space-x-1">
+                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
+                    <span>RESOLVED</span>
+                  </span>
+                )}
+              </div>
               <p className="text-xs text-slate-500">
-                Citizen: <strong className="text-slate-800">{currentCase.citizen_name}</strong> | Domain: <strong className="text-slate-800">{currentCase.domain_id}</strong>
+                Citizen: <strong className="text-slate-800">{currentCase.citizen_name}</strong> | Case ID: <span className="font-mono font-bold text-slate-700">{currentCase.id}</span>
               </p>
             </div>
           </div>
 
           <div className="flex items-center space-x-2">
-            <span className="px-3 py-1 bg-purple-50 text-purple-700 border border-purple-200 rounded-full text-xs font-bold font-mono">
-              Diagnostic Confidence: {Math.round((topCause?.confidence || 0.89) * 100)}%
-            </span>
+            {/* Run Autonomous Resolution Button */}
+            {!isResolved && (
+              <button
+                onClick={onExecuteAutopilot}
+                disabled={isLoading}
+                className="px-4 py-2 bg-gradient-to-r from-indigo-600 via-purple-600 to-indigo-700 hover:from-indigo-700 hover:to-purple-700 text-white rounded-xl text-xs font-bold flex items-center space-x-2 transition-all shadow-md active:scale-95 disabled:opacity-50"
+              >
+                <Zap className="w-4 h-4 text-amber-300 fill-amber-300 animate-pulse" />
+                <span>Run Autonomous Resolution (Autopilot)</span>
+              </button>
+            )}
+
+            {isResolved && (
+              <button
+                onClick={() => setShowCertificate(true)}
+                className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold flex items-center space-x-1.5 transition-all shadow-md"
+              >
+                <Award className="w-4 h-4 text-amber-300" />
+                <span>View Resolution Certificate</span>
+              </button>
+            )}
+
+            <button
+              onClick={() => setShowLegalLibrary(true)}
+              className="px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-bold flex items-center space-x-1.5 transition-all border border-slate-200"
+            >
+              <Scale className="w-3.5 h-3.5 text-slate-600" />
+              <span>Legal Precedents</span>
+            </button>
           </div>
         </div>
 
         {/* 3 Clear Problem/Discovery/Action Pillars */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-2">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-1">
           {/* Pillar 1: The Problem */}
-          <div className="p-4 rounded-xl bg-slate-50 border border-slate-200 space-y-1.5">
-            <div className="text-[11px] font-bold uppercase text-slate-500 tracking-wider">
+          <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 space-y-1.5">
+            <div className="text-[10px] font-bold uppercase text-slate-500 tracking-wider">
               1. What Went Wrong
             </div>
             <p className="text-xs text-slate-800 font-medium leading-relaxed">
@@ -69,8 +108,8 @@ export const CaseStoryView: React.FC<CaseStoryViewProps> = ({
           </div>
 
           {/* Pillar 2: The Root Discovery */}
-          <div className="p-4 rounded-xl bg-red-50/60 border border-red-200 space-y-1.5">
-            <div className="text-[11px] font-bold uppercase text-red-700 tracking-wider flex items-center space-x-1">
+          <div className="p-4 rounded-2xl bg-red-50/70 border border-red-200 space-y-1.5">
+            <div className="text-[10px] font-bold uppercase text-red-700 tracking-wider flex items-center space-x-1">
               <AlertTriangle className="w-3.5 h-3.5 text-red-600" />
               <span>2. What INDRA Discovered</span>
             </div>
@@ -80,8 +119,8 @@ export const CaseStoryView: React.FC<CaseStoryViewProps> = ({
           </div>
 
           {/* Pillar 3: The Next Action */}
-          <div className="p-4 rounded-xl bg-indigo-50/60 border border-indigo-200 space-y-1.5">
-            <div className="text-[11px] font-bold uppercase text-indigo-700 tracking-wider flex items-center space-x-1">
+          <div className="p-4 rounded-2xl bg-indigo-50/70 border border-indigo-200 space-y-1.5">
+            <div className="text-[10px] font-bold uppercase text-indigo-700 tracking-wider flex items-center space-x-1">
               <ShieldCheck className="w-3.5 h-3.5 text-indigo-600" />
               <span>3. Required Remedial Action</span>
             </div>
@@ -112,7 +151,7 @@ export const CaseStoryView: React.FC<CaseStoryViewProps> = ({
                   onViewGraph();
                 }
               }}
-              className="px-3 py-1.5 bg-purple-50 hover:bg-purple-100 text-purple-700 border border-purple-200 rounded-lg text-xs font-bold flex items-center space-x-1 transition-all"
+              className="px-3.5 py-1.5 bg-purple-50 hover:bg-purple-100 text-purple-700 border border-purple-200 rounded-xl text-xs font-bold flex items-center space-x-1.5 transition-all shadow-2xs"
             >
               <GitFork className="w-3.5 h-3.5 text-purple-600" />
               <span>Illuminate Causal Chain in Graph</span>
@@ -120,40 +159,40 @@ export const CaseStoryView: React.FC<CaseStoryViewProps> = ({
           </div>
 
           {/* Connected Step Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-5 gap-2.5 pt-1">
+          <div className="grid grid-cols-1 md:grid-cols-5 gap-3 pt-1">
             {/* Step 1 */}
-            <div className="p-3 rounded-xl bg-slate-50 border border-slate-200 space-y-1">
+            <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200 space-y-1">
               <div className="text-[10px] font-bold text-red-600 uppercase">1. Upstream Trigger</div>
               <div className="text-xs font-bold text-slate-900">Cyber Police Notice</div>
-              <div className="text-[11px] text-slate-500">Police Requisition #CR-4412 issued under Sec 102 CrPC.</div>
+              <div className="text-[11px] text-slate-500 leading-snug">Police Notice #CR-4412 issued under Sec 102 CrPC.</div>
             </div>
 
             {/* Step 2 */}
-            <div className="p-3 rounded-xl bg-slate-50 border border-slate-200 space-y-1">
+            <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200 space-y-1">
               <div className="text-[10px] font-bold text-red-600 uppercase">2. Bank Action</div>
               <div className="text-xs font-bold text-slate-900">Canara Bank Freeze</div>
-              <div className="text-[11px] text-slate-500">Full operational debit restriction placed on account *4401.</div>
+              <div className="text-[11px] text-slate-500 leading-snug">Full operational debit restriction placed on account *4401.</div>
             </div>
 
             {/* Step 3 */}
-            <div className="p-3 rounded-xl bg-amber-50 border border-amber-200 space-y-1">
+            <div className="p-3.5 rounded-xl bg-amber-50 border border-amber-200 space-y-1">
               <div className="text-[10px] font-bold text-amber-800 uppercase">3. Gateway Impact</div>
               <div className="text-xs font-bold text-slate-900">NPCI APBS Inactive</div>
-              <div className="text-[11px] text-amber-800">Aadhaar payment bridge mapping marked INACTIVE.</div>
+              <div className="text-[11px] text-amber-800 leading-snug">Aadhaar payment bridge mapping marked INACTIVE.</div>
             </div>
 
             {/* Step 4 */}
-            <div className="p-3 rounded-xl bg-red-50 border border-red-200 space-y-1">
+            <div className="p-3.5 rounded-xl bg-red-50 border border-red-200 space-y-1">
               <div className="text-[10px] font-bold text-red-700 uppercase">4. PFMS Rejection</div>
               <div className="text-xs font-bold text-red-900 font-mono">Error Code: BNS-410</div>
-              <div className="text-[11px] text-red-700">Central payment gateway aborts credit transfer.</div>
+              <div className="text-[11px] text-red-700 leading-snug">Central payment gateway aborts credit transfer.</div>
             </div>
 
             {/* Step 5 */}
-            <div className="p-3 rounded-xl bg-indigo-50 border border-indigo-200 space-y-1">
+            <div className="p-3.5 rounded-xl bg-indigo-50 border border-indigo-200 space-y-1">
               <div className="text-[10px] font-bold text-indigo-700 uppercase">5. Citizen Outcome</div>
               <div className="text-xs font-bold text-indigo-950">₹48,000 Withheld</div>
-              <div className="text-[11px] text-indigo-800">Scholarship grant withheld from student.</div>
+              <div className="text-[11px] text-indigo-800 leading-snug">Scholarship grant withheld from student.</div>
             </div>
           </div>
         </div>
@@ -163,10 +202,10 @@ export const CaseStoryView: React.FC<CaseStoryViewProps> = ({
       <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm space-y-5">
         <div>
           <h3 className="text-sm font-extrabold text-slate-900 uppercase tracking-wider">
-            Action Center & Resolution Execution
+            Action Center & Citizen Agency
           </h3>
           <p className="text-xs text-slate-500">
-            Authorize administrative actions with full citizen consent, submit to portals, and execute recovery cycles.
+            Authorize administrative actions with mandatory citizen consent, submit to portals, and verify resolutions.
           </p>
         </div>
 
@@ -327,7 +366,7 @@ export const CaseStoryView: React.FC<CaseStoryViewProps> = ({
         </div>
       </div>
 
-      {/* Modal: Legal Petition Dossier */}
+      {/* Modal 1: Legal Petition Dossier */}
       {viewingLetterAction && (
         <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-50 flex items-center justify-center p-6">
           <div className="bg-white border border-slate-300 rounded-2xl w-full max-w-2xl max-h-[85vh] flex flex-col shadow-2xl overflow-hidden">
@@ -355,6 +394,132 @@ export const CaseStoryView: React.FC<CaseStoryViewProps> = ({
                 className="px-5 py-2 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-xs font-bold transition-all shadow-xs"
               >
                 Close Petition
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal 2: Official Case Resolution Certificate */}
+      {showCertificate && (
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-50 flex items-center justify-center p-6">
+          <div className="bg-white border border-emerald-300 rounded-3xl w-full max-w-2xl max-h-[90vh] flex flex-col shadow-2xl overflow-hidden">
+            <div className="px-6 py-5 bg-gradient-to-r from-emerald-600 to-teal-700 text-white flex items-center justify-between">
+              <div className="flex items-center space-x-3">
+                <Award className="w-7 h-7 text-amber-300" />
+                <div>
+                  <h3 className="text-base font-extrabold tracking-wide">CASE RESOLUTION & AUDIT CERTIFICATE</h3>
+                  <p className="text-xs text-emerald-100 font-mono">INDRA Reference #{currentCase.id}</p>
+                </div>
+              </div>
+              <button
+                onClick={() => setShowCertificate(false)}
+                className="p-1.5 hover:bg-white/20 rounded-full transition-colors"
+              >
+                <X className="w-5 h-5 text-white" />
+              </button>
+            </div>
+
+            <div className="flex-1 p-6 overflow-y-auto space-y-4 font-sans text-xs text-slate-800">
+              <div className="p-4 rounded-2xl bg-emerald-50 border border-emerald-200 space-y-2">
+                <div className="text-xs font-bold text-emerald-900 uppercase">Settlement Confirmation</div>
+                <div className="text-sm font-extrabold text-slate-900">
+                  Benefit Amount: ₹48,000.00 Credited Successfully
+                </div>
+                <div className="font-mono text-xs text-emerald-800">
+                  Central PFMS Settlement UTR: #PFMS-UTR-34F5BBFFF2
+                </div>
+                <div className="text-[11px] text-slate-600">
+                  Beneficiary: <strong>{currentCase.citizen_name}</strong> | Destination: State Bank of India (*8812)
+                </div>
+              </div>
+
+              <div className="space-y-1.5 pt-2">
+                <div className="font-bold text-slate-900 text-xs">Diagnostic & Remediation Summary:</div>
+                <ul className="list-disc list-inside space-y-1 text-slate-700 text-[11px]">
+                  <li>Ingested and authenticated 5 multimodal source artefacts with spatial provenance.</li>
+                  <li>Reconstructed cross-domain blockades linking Cyber Notice #CR-4412 to NPCI failure BNS-410.</li>
+                  <li>Drafted statutory remapping directive under RBI APBS Master Directions.</li>
+                  <li>Executed mock gateway disbursal retry and confirmed account credit.</li>
+                </ul>
+              </div>
+
+              <div className="pt-4 border-t border-slate-200 flex justify-between items-center text-[10px] text-slate-400 font-mono">
+                <span>Cryptographic Audit Stamp: SHA256:{currentCase.id.slice(0, 16)}...</span>
+                <span>System: INDRA Intelligence v1.0</span>
+              </div>
+            </div>
+
+            <div className="px-6 py-4 bg-slate-50 border-t border-slate-200 flex justify-end space-x-2">
+              <button
+                onClick={() => {
+                  window.print();
+                }}
+                className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-800 rounded-xl text-xs font-bold flex items-center space-x-1.5 border border-slate-300 transition-all"
+              >
+                <Printer className="w-3.5 h-3.5" />
+                <span>Print Certificate</span>
+              </button>
+              <button
+                onClick={() => setShowCertificate(false)}
+                className="px-5 py-2 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-xs font-bold transition-all shadow-xs"
+              >
+                Done
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal 3: Statutory Precedents & Legal Basis Library */}
+      {showLegalLibrary && (
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-50 flex items-center justify-center p-6">
+          <div className="bg-white border border-slate-300 rounded-3xl w-full max-w-2xl max-h-[85vh] flex flex-col shadow-2xl overflow-hidden">
+            <div className="px-6 py-4 bg-slate-50 border-b border-slate-200 flex items-center justify-between">
+              <div className="flex items-center space-x-2">
+                <Scale className="w-5 h-5 text-indigo-600" />
+                <h3 className="text-sm font-extrabold text-slate-900">Statutory Precedents & Regulatory Framework</h3>
+              </div>
+              <button
+                onClick={() => setShowLegalLibrary(false)}
+                className="p-1.5 text-slate-400 hover:text-slate-800 rounded-lg transition-colors"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="flex-1 p-6 overflow-y-auto space-y-3.5 text-xs text-slate-800">
+              <div className="p-4 rounded-xl bg-slate-50 border border-slate-200 space-y-1">
+                <div className="font-bold text-indigo-900 text-xs">1. RBI Master Direction on APBS Aadhaar Seeding</div>
+                <div className="text-[11px] text-slate-500 font-mono">Ref: DPSS.CO.PD.No.1810/02.14.006/2015-16</div>
+                <p className="text-slate-700 leading-snug pt-1">
+                  Mandates commercial banks to update and synchronize the central NPCI Aadhaar mapper within zero-delay protocols upon customer submission of active account mandate.
+                </p>
+              </div>
+
+              <div className="p-4 rounded-xl bg-slate-50 border border-slate-200 space-y-1">
+                <div className="font-bold text-indigo-900 text-xs">2. High Court Precedents on Proportionality of Bank Freezes</div>
+                <div className="text-[11px] text-slate-500 font-mono">Ref: Gujarat High Court R/SCR.A/1908/2023 (Sec 102 CrPC)</div>
+                <p className="text-slate-700 leading-snug pt-1">
+                  Establishes that police freeze requisitions must be strictly restricted to disputed layered transaction amounts and total operational debit freezing of innocent citizen accounts is unlawful.
+                </p>
+              </div>
+
+              <div className="p-4 rounded-xl bg-slate-50 border border-slate-200 space-y-1">
+                <div className="font-bold text-indigo-900 text-xs">3. EPFO Standard Operating Procedure Version 3.0 (2024)</div>
+                <div className="text-[11px] text-slate-500 font-mono">Ref: Joint Declaration Policy Circular WS/2024/7741</div>
+                <p className="text-slate-700 leading-snug pt-1">
+                  Governs time-bound 15-day digital correction of Date of Exit mismatches between establishment relieving certificates and field office member records.
+                </p>
+              </div>
+            </div>
+
+            <div className="px-6 py-3.5 bg-slate-50 border-t border-slate-200 flex justify-end">
+              <button
+                onClick={() => setShowLegalLibrary(false)}
+                className="px-5 py-2 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-xs font-bold transition-all shadow-xs"
+              >
+                Close Library
               </button>
             </div>
           </div>

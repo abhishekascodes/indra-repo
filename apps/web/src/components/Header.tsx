@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import {
   Shield, Clock, Play, RotateCcw, Sliders,
   FilePlus, Hourglass, ChevronDown,
-  Sparkles, Layers, FileText
+  Sparkles, Layers, FileText, Volume2, VolumeX, Zap
 } from 'lucide-react';
 import type { Case, AgentState } from '../types';
 
@@ -13,6 +13,7 @@ interface HeaderProps {
   onAdvanceTime: (days: number) => void;
   onSelectDomain: (domainId: string) => void;
   onSimulateEvent: (eventType: string) => void;
+  onExecuteAutopilot: () => void;
   onReset: () => void;
   isLoading: boolean;
 }
@@ -38,14 +39,40 @@ export const Header: React.FC<HeaderProps> = ({
   onAdvanceTime,
   onSelectDomain,
   onSimulateEvent,
+  onExecuteAutopilot,
   onReset,
   isLoading,
 }) => {
   const [showDemoMenu, setShowDemoMenu] = useState(false);
+  const [isPlayingAudio, setIsPlayingAudio] = useState(false);
 
   const stateCfg = currentCase
     ? STATE_CONFIG[currentCase.current_state] || { label: currentCase.current_state, bg: 'bg-slate-100 border-slate-300', text: 'text-slate-700', dot: 'bg-slate-500' }
     : { label: 'Loading Case...', bg: 'bg-slate-100 border-slate-300', text: 'text-slate-700', dot: 'bg-slate-500' };
+
+  // Native Speech Synthesis for Case Briefing
+  const toggleVoiceBriefing = () => {
+    if (!currentCase) return;
+
+    if (isPlayingAudio) {
+      window.speechSynthesis.cancel();
+      setIsPlayingAudio(false);
+    } else {
+      window.speechSynthesis.cancel();
+      const text = currentCase.current_state === 'RESOLUTION'
+        ? `Case reference ${currentCase.id} for citizen ${currentCase.citizen_name} is successfully resolved. The 48,000 rupee scholarship benefit has been credited.`
+        : `INDRA Case briefing for citizen ${currentCase.citizen_name}. Issue: ${currentCase.objective}. Root Cause: ${currentCase.blocker_summary}.`;
+
+      const utterance = new SpeechSynthesisUtterance(text);
+      utterance.rate = 1.0;
+      utterance.pitch = 1.0;
+      utterance.onend = () => setIsPlayingAudio(false);
+      utterance.onerror = () => setIsPlayingAudio(false);
+
+      setIsPlayingAudio(true);
+      window.speechSynthesis.speak(utterance);
+    }
+  };
 
   return (
     <header className="bg-white border-b border-slate-200 select-none z-30 shadow-xs flex flex-col">
@@ -54,7 +81,7 @@ export const Header: React.FC<HeaderProps> = ({
         {/* Brand & Domain Toggle */}
         <div className="flex items-center space-x-6">
           <div className="flex items-center space-x-2.5">
-            <div className="w-8 h-8 rounded-lg bg-slate-900 flex items-center justify-center shadow-xs">
+            <div className="w-8 h-8 rounded-xl bg-slate-900 flex items-center justify-center shadow-xs">
               <Shield className="w-4 h-4 text-amber-500" />
             </div>
             <div>
@@ -107,6 +134,20 @@ export const Header: React.FC<HeaderProps> = ({
               <Clock className="w-3.5 h-3.5 text-amber-600" />
               <span>Day: <strong className="text-slate-900">{currentCase.simulated_day}</strong></span>
             </div>
+
+            {/* Voice Briefing Toggle */}
+            <button
+              onClick={toggleVoiceBriefing}
+              className={`p-1.5 rounded-lg border transition-all text-xs font-bold flex items-center space-x-1 ${
+                isPlayingAudio
+                  ? 'bg-amber-500 text-white border-amber-600 animate-pulse'
+                  : 'bg-slate-50 hover:bg-slate-100 text-slate-600 border-slate-200'
+              }`}
+              title="Voice Briefing"
+            >
+              {isPlayingAudio ? <VolumeX className="w-3.5 h-3.5" /> : <Volume2 className="w-3.5 h-3.5" />}
+              <span className="hidden sm:inline">{isPlayingAudio ? 'Stop Audio' : 'Audio Brief'}</span>
+            </button>
           </div>
         )}
 
@@ -114,15 +155,17 @@ export const Header: React.FC<HeaderProps> = ({
         <div className="flex items-center space-x-2">
           {currentCase && (
             <>
-              <button
-                onClick={() => onAdvanceTime(5)}
-                disabled={isLoading}
-                className="px-2.5 py-1.5 bg-white hover:bg-slate-50 text-slate-700 hover:text-slate-900 border border-slate-200 rounded-lg text-xs font-bold flex items-center space-x-1 transition-all shadow-xs active:scale-95 disabled:opacity-50"
-                title="Advance time 5 days"
-              >
-                <Play className="w-3 h-3 text-slate-500 fill-slate-500" />
-                <span>+5d</span>
-              </button>
+              {currentCase.current_state !== 'RESOLUTION' && (
+                <button
+                  onClick={onExecuteAutopilot}
+                  disabled={isLoading}
+                  className="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-xs font-bold flex items-center space-x-1.5 transition-all shadow-xs active:scale-95 disabled:opacity-50"
+                  title="Run Autonomous Resolution"
+                >
+                  <Zap className="w-3.5 h-3.5 text-amber-300 fill-amber-300" />
+                  <span className="hidden sm:inline">Autopilot</span>
+                </button>
+              )}
 
               <button
                 onClick={() => onAdvanceTime(15)}
@@ -131,7 +174,7 @@ export const Header: React.FC<HeaderProps> = ({
                 title="Fast forward 15 days to test statutory SLA expiry & automatic CPGRAMS escalation"
               >
                 <Play className="w-3 h-3 fill-white" />
-                <span>Fast-Forward +15d</span>
+                <span>+15d SLA</span>
               </button>
 
               {/* Demo Adaptive Scenarios */}
@@ -141,7 +184,7 @@ export const Header: React.FC<HeaderProps> = ({
                   className="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-xs font-bold flex items-center space-x-1.5 transition-all border border-slate-200"
                 >
                   <Sliders className="w-3.5 h-3.5 text-slate-600" />
-                  <span>Demo Events</span>
+                  <span>Demo</span>
                   <ChevronDown className="w-3 h-3" />
                 </button>
 

@@ -138,6 +138,26 @@ export const App: React.FC = () => {
     }
   };
 
+  const handleExecuteAutopilot = async () => {
+    if (!currentCase) return;
+    try {
+      setIsLoading(true);
+      showToast('Executing Autonomous Case Resolution...', 'info');
+      const res = await api.executeAutopilot(currentCase.id);
+      await refreshCase(currentCase.id);
+      if (res.utr) {
+        showToast(`Autonomous Resolution Completed! ₹48,000 credited via UTR #${res.utr}`);
+      } else {
+        showToast('Autonomous Resolution Completed Successfully!');
+      }
+    } catch (err) {
+      console.error('Error executing autopilot:', err);
+      showToast('Error during autonomous execution', 'warning');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const handleSimulateEvent = async (eventType: string) => {
     if (!currentCase) return;
     try {
@@ -192,6 +212,7 @@ export const App: React.FC = () => {
         onAdvanceTime={handleAdvanceTime}
         onSelectDomain={initializeCase}
         onSimulateEvent={handleSimulateEvent}
+        onExecuteAutopilot={handleExecuteAutopilot}
         onReset={handleReset}
         isLoading={isLoading}
       />
@@ -205,6 +226,7 @@ export const App: React.FC = () => {
             onGrantConsent={handleGrantConsent}
             onSubmitAction={handleSubmitAction}
             onResolveChain={handleResolveChain}
+            onExecuteAutopilot={handleExecuteAutopilot}
             onHighlightCausalChain={handleToggleCausalChain}
             onViewGraph={() => setActiveView('graph')}
             isLoading={isLoading}

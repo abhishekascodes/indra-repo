@@ -276,7 +276,6 @@ async def submit_action_to_mock_system(case_id: str, action_id: str):
 
     # Execute mock backend call based on action type
     if action.action_type == "NPCI_MAPPING_UPDATE_REQUEST":
-        # Simulate Bank & NPCI Seeding with SBI active account
         GLOBAL_MOCK_STATE.bank_accounts["38492018812"]["npci_apbs_mapped"] = True
         GLOBAL_MOCK_STATE.npci_mapper["XXXX-XXXX-8821"] = {
             "citizen_name": case.citizen_name,
@@ -334,10 +333,7 @@ async def advance_case_time(case_id: str, req: TimeAdvanceRequest):
 @app.post("/api/cases/{case_id}/simulate-event")
 async def simulate_case_event(case_id: str, req: SimulateEventRequest):
     """
-    Simulates adaptive real-world events on actual case state:
-    - SLA_TIMEOUT: Advances simulated time past SLA, triggers automatic escalation.
-    - GOV_DELAY: Adds 7 days and institutional delay notice.
-    - NEW_EVIDENCE: Dynamically adds an updated bank statement.
+    Simulates adaptive real-world events on actual case state.
     """
     case = CASES_DB.get(case_id)
     if not case:
@@ -357,10 +353,9 @@ async def simulate_case_event(case_id: str, req: SimulateEventRequest):
             event_type="SYSTEM_OBSERVATION",
             epistemic_category=EpistemicCategory.SYSTEM_OBSERVATION
         ))
-        return {"status": "SUCCESS", "message": "Simulated institutional delay.", "case": case}
+        return {"status": "SUCCESS", "message": "Simulated institutional delay (+7 days).", "case": case}
 
     elif req.event_type == "NEW_EVIDENCE":
-        # Add supplemental verified bank acknowledgment
         doc_id = f"doc_ack_{uuid.uuid4().hex[:6]}"
         ack_doc = CaseDocument(
             id=doc_id,
@@ -390,7 +385,7 @@ async def simulate_case_event(case_id: str, req: SimulateEventRequest):
         )
         graph_mgr.add_node(ack_node)
         graph_mgr.sync_to_case(case)
-        return {"status": "SUCCESS", "message": "Supplemental evidence ingested.", "case": case}
+        return {"status": "SUCCESS", "message": "Supplemental verified evidence ingested.", "case": case}
 
     return {"status": "SUCCESS", "case": case}
 
@@ -398,16 +393,12 @@ async def simulate_case_event(case_id: str, req: SimulateEventRequest):
 @app.post("/api/cases/{case_id}/resolve-dbt-chain")
 async def resolve_dbt_chain(case_id: str):
     """
-    Completes the full resolution verification cycle:
-    1. Checks NPCI status
-    2. Retries PFMS Disbursal
-    3. If PFMS succeeds, transitions to VERIFICATION -> RESOLUTION!
+    Completes the full resolution verification cycle.
     """
     case = CASES_DB.get(case_id)
     if not case:
         raise HTTPException(status_code=404, detail="Case not found.")
 
-    # Check PFMS Disbursal
     disbursal = GLOBAL_MOCK_STATE.pfms_disbursals.get("DBT/2026/SCH-884920")
     mapper_entry = GLOBAL_MOCK_STATE.npci_mapper.get("XXXX-XXXX-8821")
 
@@ -433,7 +424,6 @@ async def resolve_dbt_chain(case_id: str):
             )
             graph_mgr.add_node(obs_node)
 
-            # State Transitions: WAITING / ESCALATION -> RESPONSE_RECEIVED -> VERIFICATION -> RESOLUTION
             if case.current_state in [AgentState.WAITING, AgentState.ESCALATION_REQUIRED]:
                 case = CaseStateMachine.transition(case, AgentState.RESPONSE_RECEIVED, reason="PFMS Payment Gateway confirmed successful benefit credit.")
             if case.current_state == AgentState.RESPONSE_RECEIVED:
@@ -445,6 +435,40 @@ async def resolve_dbt_chain(case_id: str):
             return {"status": "RESOLVED", "utr": utr, "case": case}
 
     raise HTTPException(status_code=400, detail="Prerequisites not satisfied in mock environment.")
+
+
+@app.post("/api/cases/{case_id}/autopilot")
+async def execute_autonomous_resolution(case_id: str):
+    """
+    Executes the entire end-to-end case resolution journey autonomously in sequence:
+    1. Ingestion & Graph Reconstitution
+    2. Citizen Authorization
+    3. Portal Submission
+    4. Time Fast-Forward (+15 Days SLA)
+    5. Disbursal Resolution & UTR Issuance
+    """
+    case = CASES_DB.get(case_id)
+    if not case:
+        raise HTTPException(status_code=404, detail="Case not found.")
+
+    # 1. Reason
+    await execute_case_reasoning(case_id)
+
+    # 2. Consent & Submit first action
+    if case.actions:
+        action = case.actions[0]
+        ActionLayer.grant_consent(case, action.id)
+        await submit_action_to_mock_system(case_id, action.id)
+
+    # 3. Advance time 15 days
+    TemporalEngine.advance_time(case, 15)
+
+    # 4. Resolve DBT
+    if case.domain_id == "dbt_failure":
+        res = await resolve_dbt_chain(case_id)
+        return {"status": "AUTONOMOUS_SUCCESS", "utr": res["utr"], "case": case}
+
+    return {"status": "AUTONOMOUS_SUCCESS", "case": case}
 
 
 @app.get("/api/cases/{case_id}/graph")

@@ -82,6 +82,13 @@ export const api = {
     return res.json();
   },
 
+  async executeAutopilot(caseId: string) {
+    const res = await fetch(`${API_BASE}/cases/${caseId}/autopilot`, {
+      method: 'POST',
+    });
+    return res.json();
+  },
+
   async getGraph(caseId: string): Promise<UIGraphData> {
     const res = await fetch(`${API_BASE}/cases/${caseId}/graph`);
     return res.json();

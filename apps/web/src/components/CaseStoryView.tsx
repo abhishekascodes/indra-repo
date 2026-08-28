@@ -2,8 +2,8 @@ import React, { useState } from 'react';
 import confetti from 'canvas-confetti';
 import {
   Sparkles, AlertTriangle, CheckCircle2, FileText, Send, Lock,
-  Check, ShieldCheck, GitFork, X, Zap, Scale, Printer, Award,
-  Search, Eye, HelpCircle, GitCompare, Fingerprint, Network, Cpu
+  Check, ShieldCheck, X, Zap, Scale, Printer, Award,
+  Search, Eye, GitCompare, Fingerprint, FileCheck
 } from 'lucide-react';
 import type { Case, ActionDraft } from '../types';
 import { EpistemicLedgerModal } from './EpistemicLedgerModal';
@@ -48,6 +48,7 @@ export const CaseStoryView: React.FC<CaseStoryViewProps> = ({
   const contradictions = currentCase.contradictions || [];
   const isResolved = currentCase.current_state === 'RESOLUTION';
   const isWaiting = currentCase.current_state === 'WAITING';
+  const isDbt = currentCase.domain_id === 'dbt_failure';
 
   const triggerConfetti = () => {
     confetti({
@@ -77,7 +78,7 @@ export const CaseStoryView: React.FC<CaseStoryViewProps> = ({
 
   return (
     <div className="h-full overflow-y-auto bg-[#F8FAFC] p-6 space-y-6 select-none font-sans">
-      {/* 1. Executive Diagnostic Hero Banner */}
+      {/* 1. Citizen Clarity Hero Header */}
       <div className="bg-white rounded-3xl border border-slate-200/90 p-6 shadow-sm space-y-5">
         <div className="flex items-center justify-between flex-wrap gap-4">
           <div className="flex items-center space-x-3.5">
@@ -87,34 +88,34 @@ export const CaseStoryView: React.FC<CaseStoryViewProps> = ({
             <div>
               <div className="flex items-center space-x-2.5">
                 <h2 className="text-lg font-black text-slate-900 tracking-tight">
-                  Case Situation & Diagnostic Intelligence
+                  {isDbt ? "Post-Matric Scholarship Payment Recovery" : "EPFO Form 19 Claim Settlement"}
                 </h2>
                 {isResolved ? (
                   <span className="px-3 py-1 bg-emerald-50 text-emerald-800 border border-emerald-300 rounded-full text-xs font-black flex items-center space-x-1 shadow-2xs">
                     <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
-                    <span>SETTLEMENT VERIFIED</span>
+                    <span>SETTLEMENT VERIFIED & CREDITED</span>
                   </span>
                 ) : (
-                  <span className="px-2.5 py-0.5 bg-slate-100 text-slate-700 border border-slate-200 rounded-full text-xs font-bold font-mono">
-                    CONFIDENCE: {Math.round((topCause?.confidence || 0.94) * 100)}% • CONFIRMED
+                  <span className="px-2.5 py-0.5 bg-amber-50 text-amber-800 border border-amber-300 rounded-full text-xs font-bold">
+                    ACTION READY • 1 STEP TO RESOLUTION
                   </span>
                 )}
               </div>
               <p className="text-xs text-slate-500 font-medium mt-0.5">
-                Beneficiary: <strong className="text-slate-900">{currentCase.citizen_name}</strong> • Case Ref: <span className="font-mono font-bold text-slate-700">{currentCase.id}</span>
+                Citizen: <strong className="text-slate-900">{currentCase.citizen_name}</strong> • Case Ref: <span className="font-mono font-bold text-slate-700">{currentCase.id}</span> • Value: <strong className="text-emerald-700">{isDbt ? "₹48,000.00" : "Full PF Balance"}</strong>
               </p>
             </div>
           </div>
 
           <div className="flex items-center space-x-2 flex-wrap gap-y-2">
-            {/* Progressive Disclosure: Frontier Intelligence Buttons */}
+            {/* Quick Proof Buttons */}
             <button
               onClick={() => setShowEpistemicLedger(true)}
               className="px-3 py-2 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200 rounded-xl text-xs font-bold flex items-center space-x-1.5 transition-all cursor-pointer shadow-2xs"
               title="Audit Epistemic Ledger (Why INDRA believes this)"
             >
-              <Cpu className="w-3.5 h-3.5 text-indigo-600" />
-              <span>Epistemic Ledger</span>
+              <FileCheck className="w-3.5 h-3.5 text-indigo-600" />
+              <span>Inspect Proof</span>
             </button>
 
             <button
@@ -123,25 +124,16 @@ export const CaseStoryView: React.FC<CaseStoryViewProps> = ({
               title="Simulate What-If Intervention"
             >
               <GitCompare className="w-3.5 h-3.5 text-purple-600" />
-              <span>Simulate What-If</span>
+              <span>What-If Simulation</span>
             </button>
 
             <button
               onClick={() => setShowIdentityEntropy(true)}
               className="px-3 py-2 bg-teal-50 hover:bg-teal-100 text-teal-700 border border-teal-200 rounded-xl text-xs font-bold flex items-center space-x-1.5 transition-all cursor-pointer shadow-2xs"
-              title="Inspect Cross-Registry Identity Entropy"
+              title="Inspect Cross-Registry Identity Consistency"
             >
               <Fingerprint className="w-3.5 h-3.5 text-teal-600" />
-              <span>Identity Coherence</span>
-            </button>
-
-            <button
-              onClick={() => setShowSystemicFailures(true)}
-              className="px-3 py-2 bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 rounded-xl text-xs font-bold flex items-center space-x-1.5 transition-all cursor-pointer shadow-2xs"
-              title="View Macro Bureaucratic Failure Clusters"
-            >
-              <Network className="w-3.5 h-3.5 text-rose-600" />
-              <span>Systemic Patterns</span>
+              <span>Identity Match (100%)</span>
             </button>
 
             {/* Run Autonomous Resolution Button */}
@@ -165,220 +157,85 @@ export const CaseStoryView: React.FC<CaseStoryViewProps> = ({
                 <span>Audit Certificate</span>
               </button>
             )}
-
-            <button
-              onClick={() => setShowLegalLibrary(true)}
-              className="px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-bold flex items-center space-x-1.5 transition-all border border-slate-200 cursor-pointer"
-            >
-              <Scale className="w-4 h-4 text-slate-600" />
-              <span>Statutory Laws</span>
-            </button>
           </div>
         </div>
 
-        {/* Level 1: Observed Discrepancy & Situation Cards */}
+        {/* 5-Question Clear Explainer Grid (Ultra-Simple for Citizen) */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-1">
-          {/* Pillar 1: Observed Discrepancy */}
+          {/* Card 1: What Happened? */}
           <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200/80 space-y-1.5 shadow-2xs">
             <div className="text-[10px] font-black uppercase text-slate-500 tracking-wider">
-              1. Observed Discrepancy (What Happened)
+              1. What Happened?
             </div>
             <p className="text-xs text-slate-800 font-medium leading-relaxed">
-              {currentCase.objective}
+              {isDbt
+                ? "Your ₹48,000 scholarship payment was withheld at the central government treasury portal."
+                : "Your Form 19 pension settlement claim was rejected due to an exit date discrepancy."}
             </p>
           </div>
 
-          {/* Pillar 2: Reconstructed Root Cause */}
+          {/* Card 2: Why Did It Happen? */}
           <div className="p-4 rounded-2xl bg-red-50/70 border border-red-200/80 space-y-1.5 shadow-2xs">
             <div className="text-[10px] font-black uppercase text-red-700 tracking-wider flex items-center space-x-1">
               <AlertTriangle className="w-3.5 h-3.5 text-red-600" />
-              <span>2. Forensic Root Cause (What INDRA Discovered)</span>
+              <span>2. Why Did It Happen?</span>
             </div>
             <p className="text-xs text-red-950 font-medium leading-relaxed">
-              {currentCase.blocker_summary || topCause?.hypothesis || "Analyzing root blocker..."}
+              {isDbt
+                ? "Your Canara Bank account was frozen due to a police notice, which stopped the payment link. Your scholarship is completely safe, but the link must be moved to your active SBI account."
+                : "Your employer's monthly return logged your exit date as 15-Nov instead of 31-Oct (15-day difference)."}
             </p>
           </div>
 
-          {/* Pillar 3: Remedial Action Directive */}
+          {/* Card 3: What Will INDRA Do? */}
           <div className="p-4 rounded-2xl bg-indigo-50/70 border border-indigo-200/80 space-y-1.5 shadow-2xs">
             <div className="text-[10px] font-black uppercase text-indigo-700 tracking-wider flex items-center space-x-1">
               <ShieldCheck className="w-3.5 h-3.5 text-indigo-600" />
-              <span>3. Remedial Directive (What Needs Action)</span>
+              <span>3. What Will INDRA Do?</span>
             </div>
             <p className="text-xs text-indigo-950 font-medium leading-relaxed">
-              {pendingActions[0]?.purpose || topCause?.recommended_remedy?.split('\n')[0] || "Execute administrative representation."}
+              {isDbt
+                ? "INDRA will submit a statutory request under RBI rules to redirect your scholarship payment link to your active State Bank of India account (*8812)."
+                : "INDRA will submit a digital Joint Declaration correction under EPFO SOP v3.0 to correct the exit date."}
             </p>
           </div>
         </div>
       </div>
 
-      {/* 2. ROOT CAUSE HYPOTHESIS AS A FIRST-CLASS OBJECT */}
-      {topCause && (
-        <div className="bg-white rounded-3xl border-2 border-indigo-500/80 p-6 shadow-md shadow-indigo-500/5 space-y-4">
-          <div className="flex items-start justify-between flex-wrap gap-3">
-            <div>
-              <div className="flex items-center space-x-2">
-                <span className="text-[10px] font-black uppercase tracking-widest text-indigo-700 bg-indigo-100 px-2.5 py-0.5 rounded-full border border-indigo-300">
-                  ROOT CAUSE HYPOTHESIS
-                </span>
-                <span className="text-xs font-mono font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
-                  CONFIDENCE: {Math.round(topCause.confidence * 100)}% • CONFIRMED
-                </span>
-              </div>
-              <h3 className="text-sm font-black text-slate-900 mt-1.5 leading-snug">
-                {topCause.hypothesis}
-              </h3>
-            </div>
-
-            <div className="flex items-center space-x-2">
-              <button
-                onClick={() => setShowEpistemicLedger(true)}
-                className="px-3.5 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold rounded-xl border border-slate-200 transition-all cursor-pointer"
-              >
-                Inspect Epistemic Trail
-              </button>
-
-              <button
-                onClick={handleViewReasoning}
-                className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-black rounded-xl shadow-xs transition-all flex items-center space-x-1.5 cursor-pointer active:scale-95"
-              >
-                <GitFork className="w-4 h-4 text-amber-300" />
-                <span>VIEW REASONING IN GRAPH</span>
-              </button>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-3 pt-2 text-xs">
-            {/* Supporting Evidence */}
-            <div className="p-3.5 rounded-2xl bg-slate-50 border border-slate-200 space-y-1.5">
-              <div className="text-[10px] font-black uppercase text-slate-500">Supported By:</div>
-              <ul className="space-y-1 text-slate-700 text-[11px]">
-                <li className="flex items-center space-x-1.5 text-emerald-700 font-medium">
-                  <Check className="w-3.5 h-3.5 text-emerald-600" />
-                  <span>3 Verified Source Documents</span>
-                </li>
-                <li className="flex items-center space-x-1.5 text-teal-700 font-medium">
-                  <Check className="w-3.5 h-3.5 text-teal-600" />
-                  <span>1 Live NPCI Gateway Observation</span>
-                </li>
-              </ul>
-            </div>
-
-            {/* Counter Evidence */}
-            <div className="p-3.5 rounded-2xl bg-slate-50 border border-slate-200 space-y-1.5">
-              <div className="text-[10px] font-black uppercase text-slate-500">Counter-Evidence:</div>
-              <p className="text-[11px] text-slate-500 italic">None detected across institutional registries.</p>
-            </div>
-
-            {/* Explicit Unknowns */}
-            <div className="p-3.5 rounded-2xl bg-slate-50 border border-slate-200 space-y-1.5">
-              <div className="text-[10px] font-black uppercase text-amber-700 flex items-center space-x-1">
-                <HelpCircle className="w-3 h-3 text-amber-600" />
-                <span>Explicit Unknown:</span>
-              </div>
-              <p className="text-[11px] text-slate-600 leading-snug">
-                Originating Cyber Crime Cell case docket details (non-fatal to APBS remapping).
-              </p>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* 3. Visual Multi-System Causal Pipeline Flow */}
-      <div className="bg-white rounded-3xl border border-slate-200/90 p-6 shadow-sm space-y-4">
-        <div className="flex items-center justify-between">
+      {/* 2. Next Best Evidence & Readiness Reassurance Banner */}
+      <div className="p-4 rounded-2xl bg-emerald-50/80 border border-emerald-200 text-xs text-emerald-950 flex items-center justify-between shadow-2xs">
+        <div className="flex items-center space-x-3">
+          <CheckCircle2 className="w-5 h-5 text-emerald-600 flex-shrink-0" />
           <div>
-            <h3 className="text-xs font-black text-slate-900 uppercase tracking-wider">
-              Cross-Domain Failure Reconstruction
-            </h3>
-            <p className="text-xs text-slate-500 mt-0.5">
-              Deterministic causal propagation reconstructed by INDRA from disparate administrative registries.
-            </p>
+            <span className="font-bold">All Supporting Documents Verified & Ready:</span>
+            <span className="text-emerald-800 ml-1.5">
+              INDRA has already verified your Aadhaar token, scholarship sanction order, and active bank records. No additional paperwork is required from you.
+            </span>
           </div>
-          <button
-            onClick={handleViewReasoning}
-            className="px-3.5 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-200 rounded-xl text-xs font-bold flex items-center space-x-1.5 transition-all cursor-pointer shadow-2xs"
-          >
-            <GitFork className="w-3.5 h-3.5 text-slate-700" />
-            <span>Open Graph Canvas</span>
-          </button>
         </div>
-
-        {/* Connected Flow for Flagship DBT */}
-        {currentCase.domain_id === 'dbt_failure' && (
-          <div className="grid grid-cols-1 md:grid-cols-5 gap-3 pt-1">
-            <div className="p-3.5 rounded-2xl bg-slate-50 border border-slate-200 space-y-1">
-              <div className="text-[10px] font-bold text-red-600 uppercase">1. Upstream Requisition</div>
-              <div className="text-xs font-black text-slate-900">Cyber Police Notice</div>
-              <div className="text-[11px] text-slate-500 leading-snug">Sec 102 CrPC notice on Canara Bank account *4401.</div>
-            </div>
-
-            <div className="p-3.5 rounded-2xl bg-slate-50 border border-slate-200 space-y-1">
-              <div className="text-[10px] font-bold text-red-600 uppercase">2. Bank Freeze</div>
-              <div className="text-xs font-black text-slate-900">Canara Debit Freeze</div>
-              <div className="text-[11px] text-slate-500 leading-snug">Total operational freeze placed on student's account.</div>
-            </div>
-
-            <div className="p-3.5 rounded-2xl bg-amber-50/70 border border-amber-200 space-y-1">
-              <div className="text-[10px] font-bold text-amber-800 uppercase">3. Gateway Impact</div>
-              <div className="text-xs font-black text-slate-900">NPCI APBS Inactive</div>
-              <div className="text-[11px] text-amber-800 leading-snug">Aadhaar payment bridge mandate flagged INACTIVE.</div>
-            </div>
-
-            <div className="p-3.5 rounded-2xl bg-red-50/70 border border-red-200 space-y-1">
-              <div className="text-[10px] font-bold text-red-700 uppercase">4. PFMS Rejection</div>
-              <div className="text-xs font-black text-red-900 font-mono">Error: BNS-410</div>
-              <div className="text-[11px] text-red-700 leading-snug">Central gateway aborts scheduled transfer.</div>
-            </div>
-
-            <div className="p-3.5 rounded-2xl bg-indigo-50/70 border border-indigo-200 space-y-1">
-              <div className="text-[10px] font-bold text-indigo-700 uppercase">5. Citizen Outcome</div>
-              <div className="text-xs font-black text-indigo-950">₹48,000 Withheld</div>
-              <div className="text-[11px] text-indigo-800 leading-snug">Post-Matric Scholarship withheld from student.</div>
-            </div>
-          </div>
-        )}
-
-        {/* Connected Flow for EPFO */}
-        {currentCase.domain_id === 'epfo_claim' && (
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-3 pt-1">
-            <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 space-y-1">
-              <div className="text-[10px] font-bold text-slate-500 uppercase">1. Member Record</div>
-              <div className="text-xs font-black text-slate-900">Relieving Certificate</div>
-              <div className="text-[11px] text-slate-500">Service ended 2025-10-31 as certified by employer.</div>
-            </div>
-            <div className="p-4 rounded-2xl bg-red-50/70 border border-red-200 space-y-1">
-              <div className="text-[10px] font-bold text-red-700 uppercase">2. Portal Contradiction</div>
-              <div className="text-xs font-black text-red-900">ECR Filing Mismatch</div>
-              <div className="text-[11px] text-red-700">Employer return logged exit as 2025-11-15 (15d offset).</div>
-            </div>
-            <div className="p-4 rounded-2xl bg-indigo-50/70 border border-indigo-200 space-y-1">
-              <div className="text-[10px] font-bold text-indigo-700 uppercase">3. Remedial Action</div>
-              <div className="text-xs font-black text-indigo-950">Joint Declaration (SOP v3.0)</div>
-              <div className="text-[11px] text-indigo-800">15-day digital correction protocol under EPFO circular.</div>
-            </div>
-          </div>
-        )}
+        <span className="text-[10px] font-mono font-bold bg-emerald-200/60 text-emerald-900 px-2.5 py-1 rounded-lg">
+          ZERO CITIZEN FRICTION
+        </span>
       </div>
 
-      {/* 4. Action Center & Resolution Controls */}
+      {/* 3. Action Center & Resolution Controls */}
       <div className="bg-white rounded-3xl border border-slate-200/90 p-6 shadow-sm space-y-5">
         <div className="flex items-center justify-between">
           <div>
             <h3 className="text-xs font-black text-slate-900 uppercase tracking-wider">
-              Administrative Action Hub
+              Take Action to Recover Your Payment
             </h3>
             <p className="text-xs text-slate-500 mt-0.5">
-              Authorize administrative actions with mandatory citizen consent, submit to portals, and verify resolutions.
+              Review INDRA's prepared administrative representation, authorize it with one click, and track institutional resolution.
             </p>
           </div>
 
           <button
-            onClick={() => setShowActionGraph(true)}
-            className="px-3.5 py-1.5 bg-amber-50 hover:bg-amber-100 text-amber-900 border border-amber-300 rounded-xl text-xs font-bold flex items-center space-x-1.5 transition-all cursor-pointer shadow-2xs"
+            onClick={() => setShowLegalLibrary(true)}
+            className="px-3.5 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-200 rounded-xl text-xs font-bold flex items-center space-x-1.5 transition-all cursor-pointer shadow-2xs"
           >
-            <Zap className="w-3.5 h-3.5 text-amber-600" />
-            <span>Evaluate Interventions (ERU)</span>
+            <Scale className="w-3.5 h-3.5 text-slate-600" />
+            <span>Statutory Law Reference</span>
           </button>
         </div>
 
@@ -389,11 +246,13 @@ export const CaseStoryView: React.FC<CaseStoryViewProps> = ({
               <span className="w-3 h-3 rounded-full bg-amber-500 animate-ping"></span>
               <div>
                 <div className="text-xs font-black uppercase">INDRA IS WAITING FOR THE INSTITUTION</div>
-                <div className="text-[11px] text-amber-800">Statutory SLA Window: 15 Days • Portal Gateway Acknowledged</div>
+                <div className="text-[11px] text-amber-800">
+                  Statutory SLA Window: 15 Business Days • Tracking institutional compliance
+                </div>
               </div>
             </div>
             <span className="text-xs font-mono font-bold bg-amber-200/60 px-3 py-1 rounded-lg">
-              SLA ACTIVE
+              SLA ACTIVE (DAY 1 OF 15)
             </span>
           </div>
         )}
@@ -437,7 +296,7 @@ export const CaseStoryView: React.FC<CaseStoryViewProps> = ({
                     className="text-slate-800 hover:text-slate-950 font-bold flex items-center space-x-1.5 transition-colors cursor-pointer"
                   >
                     <FileText className="w-4 h-4 text-slate-600" />
-                    <span>Inspect Formal Legal Petition Dossier</span>
+                    <span>Inspect Prepared Legal Petition</span>
                   </button>
 
                   <span className="text-xs text-slate-500 font-mono">
@@ -460,12 +319,12 @@ export const CaseStoryView: React.FC<CaseStoryViewProps> = ({
                     {action.citizen_consent ? (
                       <>
                         <Check className="w-4 h-4" />
-                        <span>1. Consent Authorized</span>
+                        <span>1. Authorization Granted</span>
                       </>
                     ) : (
                       <>
                         <Lock className="w-4 h-4 text-slate-500" />
-                        <span>1. Authorize Action (Citizen Consent)</span>
+                        <span>1. Authorize INDRA to Update Payment Link</span>
                       </>
                     )}
                   </button>
@@ -477,7 +336,7 @@ export const CaseStoryView: React.FC<CaseStoryViewProps> = ({
                     className="flex-1 py-3 bg-slate-950 hover:bg-slate-800 disabled:opacity-40 disabled:pointer-events-none text-white rounded-2xl text-xs font-bold flex items-center justify-center space-x-2 transition-all shadow-md shadow-slate-950/10 active:scale-98 cursor-pointer"
                   >
                     <Send className="w-4 h-4 text-amber-400" />
-                    <span>{isSubmitted ? 'Submitted (Awaiting SLA)' : '2. Submit to Bank Gateway'}</span>
+                    <span>{isSubmitted ? 'Submitted (Awaiting SLA)' : '2. Submit Request to Bank Portal'}</span>
                   </button>
                 </div>
               </div>
@@ -485,37 +344,37 @@ export const CaseStoryView: React.FC<CaseStoryViewProps> = ({
           })}
 
           {/* Recovery Disbursal Button */}
-          {currentCase.domain_id === 'dbt_failure' && (
+          {isDbt && (
             <div className="p-5 rounded-2xl bg-gradient-to-r from-emerald-50 via-teal-50 to-emerald-50 border border-emerald-200 space-y-3 shadow-2xs">
               <div className="flex items-center space-x-2 text-xs font-bold text-emerald-900 uppercase">
                 <CheckCircle2 className="w-4 h-4 text-emerald-600" />
-                <span>3. Finalize Benefit Disbursal (PFMS Central Gateway)</span>
+                <span>3. Finalize Benefit Recovery (Government Treasury Portal)</span>
               </div>
               <p className="text-xs text-emerald-800 leading-relaxed">
-                Re-validates the updated NPCI Aadhaar mapper state against the active State Bank of India account, triggers central payment retry, and credits the ₹48,000 scholarship.
+                Re-validates the updated payment mapping against your active State Bank of India account, triggers central payment retry, and credits your ₹48,000 scholarship.
               </p>
               <button
                 onClick={handleExecuteDisbursal}
                 disabled={isLoading}
                 className="w-full py-3.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-2xl text-xs font-black tracking-wide uppercase transition-all shadow-md shadow-emerald-600/20 active:scale-98 cursor-pointer"
               >
-                Verify & Execute PFMS Disbursal
+                Verify & Credit ₹48,000 Scholarship
               </button>
             </div>
           )}
         </div>
       </div>
 
-      {/* 5. Epistemic Intelligence & Verified Facts */}
+      {/* 4. Verified Facts & Empirical Proofs */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {/* Left: Verified Facts with Epistemic Badges */}
+        {/* Left: Verified Facts */}
         <div className="bg-white rounded-3xl border border-slate-200/90 p-6 shadow-sm space-y-3.5">
           <div className="flex items-center justify-between">
             <div className="text-xs font-black uppercase text-slate-800 tracking-wider">
-              Verified Empirical Facts ({currentCase.facts_summary?.length || 0})
+              Verified Case Facts ({currentCase.facts_summary?.length || 0})
             </div>
             <span className="text-[10px] font-mono text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200 font-bold">
-              FACT • 99% CONFIRMED
+              100% VERIFIED
             </span>
           </div>
           <div className="space-y-2 max-h-56 overflow-y-auto">
@@ -567,7 +426,7 @@ export const CaseStoryView: React.FC<CaseStoryViewProps> = ({
         </div>
       </div>
 
-      {/* Frontier Modals */}
+      {/* Modals for Deep Progressive Disclosure */}
       {showEpistemicLedger && (
         <EpistemicLedgerModal
           currentCase={currentCase}
@@ -603,7 +462,7 @@ export const CaseStoryView: React.FC<CaseStoryViewProps> = ({
         />
       )}
 
-      {/* Modal 1: Legal Petition Dossier */}
+      {/* Legal Petition Dossier Modal */}
       {viewingLetterAction && (
         <div className="fixed inset-0 bg-slate-950/70 backdrop-blur-sm z-50 flex items-center justify-center p-6">
           <div className="bg-white border border-slate-300 rounded-3xl w-full max-w-2xl max-h-[85vh] flex flex-col shadow-2xl overflow-hidden">
@@ -637,7 +496,7 @@ export const CaseStoryView: React.FC<CaseStoryViewProps> = ({
         </div>
       )}
 
-      {/* Modal 2: Official Case Resolution Certificate */}
+      {/* Official Case Resolution Certificate */}
       {showCertificate && (
         <div className="fixed inset-0 bg-slate-950/70 backdrop-blur-sm z-50 flex items-center justify-center p-6">
           <div className="bg-white border border-emerald-300 rounded-3xl w-full max-w-2xl max-h-[90vh] flex flex-col shadow-2xl overflow-hidden">
@@ -676,7 +535,7 @@ export const CaseStoryView: React.FC<CaseStoryViewProps> = ({
               <div className="space-y-1.5 pt-2">
                 <div className="font-bold text-slate-900 text-xs">Diagnostic & Remediation Summary:</div>
                 <ul className="list-disc list-inside space-y-1 text-slate-700 text-[11px]">
-                  <li>Ingested and authenticated 5 multimodal source artefacts with spatial provenance.</li>
+                  <li>Ingested and authenticated 5 multimodal source records with spatial provenance.</li>
                   <li>Reconstructed cross-domain blockades linking Cyber Notice #CR-4412 to NPCI failure BNS-410.</li>
                   <li>Drafted statutory remapping directive under RBI APBS Master Directions.</li>
                   <li>Executed mock gateway disbursal retry and confirmed account credit.</li>
@@ -710,7 +569,7 @@ export const CaseStoryView: React.FC<CaseStoryViewProps> = ({
         </div>
       )}
 
-      {/* Modal 3: Searchable Statutory Framework */}
+      {/* Statutory Legal Library Modal */}
       {showLegalLibrary && (
         <div className="fixed inset-0 bg-slate-950/70 backdrop-blur-sm z-50 flex items-center justify-center p-6">
           <div className="bg-white border border-slate-300 rounded-3xl w-full max-w-2xl max-h-[85vh] flex flex-col shadow-2xl overflow-hidden">

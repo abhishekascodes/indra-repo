@@ -3,17 +3,33 @@ import {
   Shield, Clock, RotateCcw,
   Sparkles, Layers, FileText, Volume2, VolumeX, LogOut,
   Cpu, Sliders, Play, AlertTriangle, Bug, History, Database,
-  ShieldCheck, ShieldAlert
+  ShieldCheck, ShieldAlert, User, FileCheck, GitCompare, Fingerprint, Zap, Network
 } from 'lucide-react';
 import type { Case, AgentState } from '../types';
 import { ArchitectureView } from './ArchitectureView';
 import { PolicyGuardrailsModal } from './PolicyGuardrailsModal';
 import { RedTeamLabModal } from './RedTeamLabModal';
 
-export type ActiveViewType = 'story' | 'debugger' | 'replay' | 'graph' | 'evidence' | 'memory' | 'timeline';
+export type PersonaType = 'citizen' | 'auditor' | 'engineer';
+
+export type ActiveViewType =
+  | 'story'
+  | 'debugger'
+  | 'replay'
+  | 'graph'
+  | 'evidence'
+  | 'memory'
+  | 'timeline'
+  | 'epistemic_ledger'
+  | 'eru'
+  | 'identity'
+  | 'counterfactual'
+  | 'systemic';
 
 interface HeaderProps {
   currentCase: Case | null;
+  persona: PersonaType;
+  onSelectPersona: (persona: PersonaType) => void;
   activeView: ActiveViewType;
   onSelectView: (view: ActiveViewType) => void;
   onAdvanceTime: (days: number) => void;
@@ -41,6 +57,8 @@ const STATE_CONFIG: Record<AgentState, { label: string; bg: string; text: string
 
 export const Header: React.FC<HeaderProps> = ({
   currentCase,
+  persona,
+  onSelectPersona,
   activeView,
   onSelectView,
   onAdvanceTime,
@@ -72,8 +90,8 @@ export const Header: React.FC<HeaderProps> = ({
     } else {
       window.speechSynthesis.cancel();
       const text = currentCase.current_state === 'RESOLUTION'
-        ? `Case reference ${currentCase.id} for citizen ${currentCase.citizen_name} is successfully resolved. The 48,000 rupee benefit has been credited.`
-        : `INDRA Case Briefing for citizen ${currentCase.citizen_name}. Issue: ${currentCase.objective}. Root Cause: ${currentCase.blocker_summary}.`;
+        ? `Great news, ${currentCase.citizen_name}! Your case is successfully resolved. The 48,000 rupee benefit has been credited to your active State Bank of India account.`
+        : `Hello ${currentCase.citizen_name}. INDRA has identified why your payment was delayed. Your Canara Bank account was restricted, but we can safely redirect your payment to your active State Bank of India account. Please click authorize below to proceed.`;
 
       const utterance = new SpeechSynthesisUtterance(text);
       utterance.rate = 1.0;
@@ -92,7 +110,7 @@ export const Header: React.FC<HeaderProps> = ({
         {/* Top Main Command Bar */}
         <div className="h-14 px-6 flex items-center justify-between">
           {/* Brand & Domain Toggle */}
-          <div className="flex items-center space-x-6">
+          <div className="flex items-center space-x-5">
             <div className="flex items-center space-x-2.5">
               <div className="w-8 h-8 rounded-xl bg-slate-950 flex items-center justify-center shadow-xs">
                 <Shield className="w-4 h-4 text-amber-500" />
@@ -104,12 +122,63 @@ export const Header: React.FC<HeaderProps> = ({
                     HYPERVISOR
                   </span>
                 </div>
-                <p className="text-[10px] text-slate-400 font-medium -mt-0.5">Counterfactual Administrative Control</p>
+                <p className="text-[10px] text-slate-400 font-medium -mt-0.5">Sovereign Citizen Agency</p>
               </div>
             </div>
 
+            {/* Persona Switcher (Citizen vs Auditor vs Engineer) */}
+            <div className="flex items-center bg-slate-100 p-1 rounded-xl border border-slate-200 space-x-1 text-xs">
+              <button
+                onClick={() => {
+                  onSelectPersona('citizen');
+                  onSelectView('story');
+                }}
+                className={`px-3 py-1.5 rounded-lg font-bold flex items-center space-x-1.5 transition-all cursor-pointer ${
+                  persona === 'citizen'
+                    ? 'bg-white text-slate-950 shadow-xs border border-slate-200 font-black'
+                    : 'text-slate-600 hover:text-slate-900'
+                }`}
+                title="Citizen Mode (Ultra-simple, human-friendly)"
+              >
+                <User className="w-3.5 h-3.5 text-blue-600" />
+                <span>Citizen View</span>
+              </button>
+
+              <button
+                onClick={() => {
+                  onSelectPersona('auditor');
+                  onSelectView('epistemic_ledger');
+                }}
+                className={`px-3 py-1.5 rounded-lg font-bold flex items-center space-x-1.5 transition-all cursor-pointer ${
+                  persona === 'auditor'
+                    ? 'bg-white text-slate-950 shadow-xs border border-slate-200 font-black'
+                    : 'text-slate-600 hover:text-slate-900'
+                }`}
+                title="Auditor Mode (Evidence, provenance, and legal verification)"
+              >
+                <FileCheck className="w-3.5 h-3.5 text-emerald-600" />
+                <span>Auditor View</span>
+              </button>
+
+              <button
+                onClick={() => {
+                  onSelectPersona('engineer');
+                  onSelectView('graph');
+                }}
+                className={`px-3 py-1.5 rounded-lg font-bold flex items-center space-x-1.5 transition-all cursor-pointer ${
+                  persona === 'engineer'
+                    ? 'bg-white text-slate-950 shadow-xs border border-slate-200 font-black'
+                    : 'text-slate-600 hover:text-slate-900'
+                }`}
+                title="Engineer Mode (Causal graph, DevTools debugger, flight recorder, and red team lab)"
+              >
+                <Cpu className="w-3.5 h-3.5 text-amber-600" />
+                <span>Engineer View</span>
+              </button>
+            </div>
+
             {/* Exact 2 Domains Switcher */}
-            <div className="hidden lg:flex items-center bg-slate-100/90 p-1 rounded-xl border border-slate-200 space-x-1 text-xs font-semibold">
+            <div className="hidden xl:flex items-center bg-slate-100/90 p-1 rounded-xl border border-slate-200 space-x-1 text-xs font-semibold">
               <button
                 onClick={() => onSelectDomain('dbt_failure')}
                 className={`px-3 py-1.5 rounded-lg transition-all cursor-pointer ${
@@ -146,7 +215,7 @@ export const Header: React.FC<HeaderProps> = ({
               className={`px-3 py-1.5 text-xs font-bold rounded-xl flex items-center space-x-1.5 transition-all border border-slate-200 cursor-pointer ${
                 isPlayingAudio ? 'bg-indigo-600 text-white' : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
               }`}
-              title="Voice Briefing"
+              title="Voice Briefing for Citizen"
             >
               {isPlayingAudio ? <VolumeX className="w-3.5 h-3.5" /> : <Volume2 className="w-3.5 h-3.5 text-indigo-600" />}
               <span>{isPlayingAudio ? 'Stop Voice' : 'Voice'}</span>
@@ -156,7 +225,7 @@ export const Header: React.FC<HeaderProps> = ({
             <button
               onClick={() => setShowGuardrailsModal(true)}
               className="px-3 py-1.5 text-xs font-bold rounded-xl flex items-center space-x-1.5 transition-all border border-slate-200 bg-slate-100 text-slate-700 hover:bg-slate-200 cursor-pointer"
-              title="Inspect Policy-as-Code Guardrails"
+              title="Inspect Formal Policy-as-Code Guardrails"
             >
               <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
               <span>Guardrails</span>
@@ -273,92 +342,191 @@ export const Header: React.FC<HeaderProps> = ({
           </div>
         </div>
 
-        {/* Bottom Full-Width View Switcher Tabs (All 7 Views) */}
+        {/* Bottom Adaptive View Switcher Tabs based on Active Persona */}
         <div className="h-11 px-6 bg-slate-50/90 border-t border-slate-200/80 flex items-center justify-between overflow-x-auto scrollbar-none">
           <div className="flex items-center space-x-1">
-            <button
-              onClick={() => onSelectView('story')}
-              className={`px-3.5 py-1.5 text-xs font-bold rounded-lg transition-all flex items-center space-x-1.5 cursor-pointer flex-shrink-0 ${
-                activeView === 'story'
-                  ? 'bg-white text-slate-900 shadow-xs border border-slate-200 font-black'
-                  : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
-              }`}
-            >
-              <Sparkles className="w-3.5 h-3.5 text-amber-500" />
-              <span>Case Story & Actions</span>
-            </button>
+            {/* 1. CITIZEN PERSONA TABS */}
+            {persona === 'citizen' && (
+              <>
+                <button
+                  onClick={() => onSelectView('story')}
+                  className={`px-3.5 py-1.5 text-xs font-bold rounded-lg transition-all flex items-center space-x-1.5 cursor-pointer flex-shrink-0 ${
+                    activeView === 'story'
+                      ? 'bg-white text-slate-900 shadow-xs border border-slate-200 font-black'
+                      : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
+                  }`}
+                >
+                  <Sparkles className="w-3.5 h-3.5 text-amber-500" />
+                  <span>My Case & Solution</span>
+                </button>
 
-            <button
-              onClick={() => onSelectView('debugger')}
-              className={`px-3.5 py-1.5 text-xs font-bold rounded-lg transition-all flex items-center space-x-1.5 cursor-pointer flex-shrink-0 ${
-                activeView === 'debugger'
-                  ? 'bg-white text-slate-900 shadow-xs border border-slate-200 font-black'
-                  : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
-              }`}
-            >
-              <Bug className="w-3.5 h-3.5 text-amber-600" />
-              <span>Admin Debugger</span>
-            </button>
+                <button
+                  onClick={() => onSelectView('evidence')}
+                  className={`px-3.5 py-1.5 text-xs font-bold rounded-lg transition-all flex items-center space-x-1.5 cursor-pointer flex-shrink-0 ${
+                    activeView === 'evidence'
+                      ? 'bg-white text-slate-900 shadow-xs border border-slate-200 font-black'
+                      : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
+                  }`}
+                >
+                  <FileText className="w-3.5 h-3.5 text-emerald-500" />
+                  <span>My Documents ({currentCase?.documents?.length || 0})</span>
+                </button>
 
-            <button
-              onClick={() => onSelectView('replay')}
-              className={`px-3.5 py-1.5 text-xs font-bold rounded-lg transition-all flex items-center space-x-1.5 cursor-pointer flex-shrink-0 ${
-                activeView === 'replay'
-                  ? 'bg-white text-slate-900 shadow-xs border border-slate-200 font-black'
-                  : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
-              }`}
-            >
-              <History className="w-3.5 h-3.5 text-indigo-600" />
-              <span>Flight Recorder (Replay)</span>
-            </button>
+                <button
+                  onClick={() => onSelectView('timeline')}
+                  className={`px-3.5 py-1.5 text-xs font-bold rounded-lg transition-all flex items-center space-x-1.5 cursor-pointer flex-shrink-0 ${
+                    activeView === 'timeline'
+                      ? 'bg-white text-slate-900 shadow-xs border border-slate-200 font-black'
+                      : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
+                  }`}
+                >
+                  <Clock className="w-3.5 h-3.5 text-indigo-500" />
+                  <span>Status Timeline</span>
+                </button>
+              </>
+            )}
 
-            <button
-              onClick={() => onSelectView('graph')}
-              className={`px-3.5 py-1.5 text-xs font-bold rounded-lg transition-all flex items-center space-x-1.5 cursor-pointer flex-shrink-0 ${
-                activeView === 'graph'
-                  ? 'bg-white text-slate-900 shadow-xs border border-slate-200 font-black'
-                  : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
-              }`}
-            >
-              <Layers className="w-3.5 h-3.5 text-indigo-500" />
-              <span>Case Graph Topology</span>
-            </button>
+            {/* 2. AUDITOR PERSONA TABS */}
+            {persona === 'auditor' && (
+              <>
+                <button
+                  onClick={() => onSelectView('epistemic_ledger')}
+                  className={`px-3.5 py-1.5 text-xs font-bold rounded-lg transition-all flex items-center space-x-1.5 cursor-pointer flex-shrink-0 ${
+                    activeView === 'epistemic_ledger'
+                      ? 'bg-white text-slate-900 shadow-xs border border-slate-200 font-black'
+                      : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
+                  }`}
+                >
+                  <FileCheck className="w-3.5 h-3.5 text-indigo-600" />
+                  <span>Epistemic Fact Ledger</span>
+                </button>
 
-            <button
-              onClick={() => onSelectView('evidence')}
-              className={`px-3.5 py-1.5 text-xs font-bold rounded-lg transition-all flex items-center space-x-1.5 cursor-pointer flex-shrink-0 ${
-                activeView === 'evidence'
-                  ? 'bg-white text-slate-900 shadow-xs border border-slate-200 font-black'
-                  : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
-              }`}
-            >
-              <FileText className="w-3.5 h-3.5 text-emerald-500" />
-              <span>Evidence Vault</span>
-            </button>
+                <button
+                  onClick={() => onSelectView('evidence')}
+                  className={`px-3.5 py-1.5 text-xs font-bold rounded-lg transition-all flex items-center space-x-1.5 cursor-pointer flex-shrink-0 ${
+                    activeView === 'evidence'
+                      ? 'bg-white text-slate-900 shadow-xs border border-slate-200 font-black'
+                      : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
+                  }`}
+                >
+                  <FileText className="w-3.5 h-3.5 text-emerald-500" />
+                  <span>Evidence Vault & Provenance</span>
+                </button>
 
-            <button
-              onClick={() => onSelectView('memory')}
-              className={`px-3.5 py-1.5 text-xs font-bold rounded-lg transition-all flex items-center space-x-1.5 cursor-pointer flex-shrink-0 ${
-                activeView === 'memory'
-                  ? 'bg-white text-slate-900 shadow-xs border border-slate-200 font-black'
-                  : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
-              }`}
-            >
-              <Database className="w-3.5 h-3.5 text-blue-500" />
-              <span>Case Memory</span>
-            </button>
+                <button
+                  onClick={() => onSelectView('timeline')}
+                  className={`px-3.5 py-1.5 text-xs font-bold rounded-lg transition-all flex items-center space-x-1.5 cursor-pointer flex-shrink-0 ${
+                    activeView === 'timeline'
+                      ? 'bg-white text-slate-900 shadow-xs border border-slate-200 font-black'
+                      : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
+                  }`}
+                >
+                  <Clock className="w-3.5 h-3.5 text-slate-500" />
+                  <span>Bitemporal Timeline & SLAs</span>
+                </button>
 
-            <button
-              onClick={() => onSelectView('timeline')}
-              className={`px-3.5 py-1.5 text-xs font-bold rounded-lg transition-all flex items-center space-x-1.5 cursor-pointer flex-shrink-0 ${
-                activeView === 'timeline'
-                  ? 'bg-white text-slate-900 shadow-xs border border-slate-200 font-black'
-                  : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
-              }`}
-            >
-              <Clock className="w-3.5 h-3.5 text-slate-500" />
-              <span>Timeline</span>
-            </button>
+                <button
+                  onClick={() => onSelectView('memory')}
+                  className={`px-3.5 py-1.5 text-xs font-bold rounded-lg transition-all flex items-center space-x-1.5 cursor-pointer flex-shrink-0 ${
+                    activeView === 'memory'
+                      ? 'bg-white text-slate-900 shadow-xs border border-slate-200 font-black'
+                      : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
+                  }`}
+                >
+                  <Database className="w-3.5 h-3.5 text-blue-500" />
+                  <span>Persistent Case Memory</span>
+                </button>
+              </>
+            )}
+
+            {/* 3. ENGINEER PERSONA TABS */}
+            {persona === 'engineer' && (
+              <>
+                <button
+                  onClick={() => onSelectView('graph')}
+                  className={`px-3.5 py-1.5 text-xs font-bold rounded-lg transition-all flex items-center space-x-1.5 cursor-pointer flex-shrink-0 ${
+                    activeView === 'graph'
+                      ? 'bg-white text-slate-900 shadow-xs border border-slate-200 font-black'
+                      : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
+                  }`}
+                >
+                  <Layers className="w-3.5 h-3.5 text-indigo-500" />
+                  <span>Causal Case Graph</span>
+                </button>
+
+                <button
+                  onClick={() => onSelectView('debugger')}
+                  className={`px-3.5 py-1.5 text-xs font-bold rounded-lg transition-all flex items-center space-x-1.5 cursor-pointer flex-shrink-0 ${
+                    activeView === 'debugger'
+                      ? 'bg-white text-slate-900 shadow-xs border border-slate-200 font-black'
+                      : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
+                  }`}
+                >
+                  <Bug className="w-3.5 h-3.5 text-amber-600" />
+                  <span>Admin Debugger</span>
+                </button>
+
+                <button
+                  onClick={() => onSelectView('replay')}
+                  className={`px-3.5 py-1.5 text-xs font-bold rounded-lg transition-all flex items-center space-x-1.5 cursor-pointer flex-shrink-0 ${
+                    activeView === 'replay'
+                      ? 'bg-white text-slate-900 shadow-xs border border-slate-200 font-black'
+                      : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
+                  }`}
+                >
+                  <History className="w-3.5 h-3.5 text-indigo-600" />
+                  <span>Flight Recorder (Replay)</span>
+                </button>
+
+                <button
+                  onClick={() => onSelectView('eru')}
+                  className={`px-3.5 py-1.5 text-xs font-bold rounded-lg transition-all flex items-center space-x-1.5 cursor-pointer flex-shrink-0 ${
+                    activeView === 'eru'
+                      ? 'bg-white text-slate-900 shadow-xs border border-slate-200 font-black'
+                      : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
+                  }`}
+                >
+                  <Zap className="w-3.5 h-3.5 text-amber-500" />
+                  <span>Action Graph (ERU)</span>
+                </button>
+
+                <button
+                  onClick={() => onSelectView('identity')}
+                  className={`px-3.5 py-1.5 text-xs font-bold rounded-lg transition-all flex items-center space-x-1.5 cursor-pointer flex-shrink-0 ${
+                    activeView === 'identity'
+                      ? 'bg-white text-slate-900 shadow-xs border border-slate-200 font-black'
+                      : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
+                  }`}
+                >
+                  <Fingerprint className="w-3.5 h-3.5 text-teal-500" />
+                  <span>Identity Entropy</span>
+                </button>
+
+                <button
+                  onClick={() => onSelectView('counterfactual')}
+                  className={`px-3.5 py-1.5 text-xs font-bold rounded-lg transition-all flex items-center space-x-1.5 cursor-pointer flex-shrink-0 ${
+                    activeView === 'counterfactual'
+                      ? 'bg-white text-slate-900 shadow-xs border border-slate-200 font-black'
+                      : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
+                  }`}
+                >
+                  <GitCompare className="w-3.5 h-3.5 text-purple-500" />
+                  <span>What-If Twin</span>
+                </button>
+
+                <button
+                  onClick={() => onSelectView('systemic')}
+                  className={`px-3.5 py-1.5 text-xs font-bold rounded-lg transition-all flex items-center space-x-1.5 cursor-pointer flex-shrink-0 ${
+                    activeView === 'systemic'
+                      ? 'bg-white text-slate-900 shadow-xs border border-slate-200 font-black'
+                      : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
+                  }`}
+                >
+                  <Network className="w-3.5 h-3.5 text-rose-500" />
+                  <span>Systemic Failure Graph</span>
+                </button>
+              </>
+            )}
           </div>
 
           {/* Case Metadata Chip */}

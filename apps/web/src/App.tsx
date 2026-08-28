@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Header, type ActiveViewType } from './components/Header';
+import { Header, type PersonaType, type ActiveViewType } from './components/Header';
 import { CaseStoryView } from './components/CaseStoryView';
 import { EvidenceVault } from './components/EvidenceVault';
 import { CaseGraphView } from './components/CaseGraphView';
@@ -7,6 +7,11 @@ import { TimelineRail } from './components/TimelineRail';
 import { AdministrativeDebugger } from './components/AdministrativeDebugger';
 import { FlightRecorderReplay } from './components/FlightRecorderReplay';
 import { CaseMemoryPanel } from './components/CaseMemoryPanel';
+import { EpistemicLedgerModal } from './components/EpistemicLedgerModal';
+import { ActionGraphModal } from './components/ActionGraphModal';
+import { IdentityEntropyModal } from './components/IdentityEntropyModal';
+import { CounterfactualModal } from './components/CounterfactualModal';
+import { SystemicFailuresModal } from './components/SystemicFailuresModal';
 import { LoginScreen } from './components/LoginScreen';
 import { api } from './services/api';
 import type { Case, UIGraphData, Provenance } from './types';
@@ -16,6 +21,7 @@ export const App: React.FC = () => {
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(
     () => localStorage.getItem('indra_auth') === 'true'
   );
+  const [persona, setPersona] = useState<PersonaType>('citizen');
   const [currentCase, setCurrentCase] = useState<Case | null>(null);
   const [graphData, setGraphData] = useState<UIGraphData | null>(null);
   const [activeProvenance, setActiveProvenance] = useState<Provenance | null>(null);
@@ -183,6 +189,7 @@ export const App: React.FC = () => {
 
   const handleToggleCausalChain = (nodeIds: string[]) => {
     setHighlightedChainNodeIds(nodeIds);
+    setPersona('engineer');
     setActiveView('graph');
     showToast('Causal path highlighted in graph topology');
   };
@@ -237,6 +244,8 @@ export const App: React.FC = () => {
       {/* 1. Header Command Bar & Workspace View Switcher */}
       <Header
         currentCase={currentCase}
+        persona={persona}
+        onSelectPersona={setPersona}
         activeView={activeView}
         onSelectView={setActiveView}
         onAdvanceTime={handleAdvanceTime}
@@ -250,7 +259,7 @@ export const App: React.FC = () => {
 
       {/* 2. Main Full-Width Active View Canvas */}
       <main className="flex-1 overflow-hidden relative">
-        {/* VIEW 1: CASE STORY & RESOLUTION HUB (Default) */}
+        {/* VIEW 1: CASE STORY & RESOLUTION HUB (Default for Citizen) */}
         {activeView === 'story' && currentCase && (
           <CaseStoryView
             currentCase={currentCase}
@@ -259,7 +268,10 @@ export const App: React.FC = () => {
             onResolveChain={handleResolveChain}
             onExecuteAutopilot={handleExecuteAutopilot}
             onHighlightCausalChain={handleToggleCausalChain}
-            onViewGraph={() => setActiveView('graph')}
+            onViewGraph={() => {
+              setPersona('engineer');
+              setActiveView('graph');
+            }}
             isLoading={isLoading}
           />
         )}
@@ -318,6 +330,56 @@ export const App: React.FC = () => {
                 simulatedDay={currentCase.simulated_day}
               />
             </div>
+          </div>
+        )}
+
+        {/* VIEW 8: EPISTEMIC FACT LEDGER (Auditor View) */}
+        {activeView === 'epistemic_ledger' && currentCase && (
+          <div className="h-full p-6 overflow-y-auto bg-slate-100 flex flex-col justify-center">
+            <EpistemicLedgerModal
+              currentCase={currentCase}
+              onClose={() => setActiveView('story')}
+            />
+          </div>
+        )}
+
+        {/* VIEW 9: ACTION GRAPH (ERU) */}
+        {activeView === 'eru' && currentCase && (
+          <div className="h-full p-6 overflow-y-auto bg-slate-100 flex flex-col justify-center">
+            <ActionGraphModal
+              currentCase={currentCase}
+              onClose={() => setActiveView('graph')}
+            />
+          </div>
+        )}
+
+        {/* VIEW 10: IDENTITY ENTROPY ENGINE */}
+        {activeView === 'identity' && currentCase && (
+          <div className="h-full p-6 overflow-y-auto bg-slate-100 flex flex-col justify-center">
+            <IdentityEntropyModal
+              currentCase={currentCase}
+              onClose={() => setActiveView('graph')}
+            />
+          </div>
+        )}
+
+        {/* VIEW 11: COUNTERFACTUAL WHAT-IF SIMULATION */}
+        {activeView === 'counterfactual' && currentCase && (
+          <div className="h-full p-6 overflow-y-auto bg-slate-100 flex flex-col justify-center">
+            <CounterfactualModal
+              currentCase={currentCase}
+              onClose={() => setActiveView('graph')}
+            />
+          </div>
+        )}
+
+        {/* VIEW 12: SYSTEMIC FAILURE GRAPH */}
+        {activeView === 'systemic' && currentCase && (
+          <div className="h-full p-6 overflow-y-auto bg-slate-100 flex flex-col justify-center">
+            <SystemicFailuresModal
+              currentCase={currentCase}
+              onClose={() => setActiveView('graph')}
+            />
           </div>
         )}
       </main>

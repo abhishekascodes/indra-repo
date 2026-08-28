@@ -221,8 +221,9 @@ export const App: React.FC = () => {
   if (!isAuthenticated) {
     return (
       <LoginScreen
-        onLogin={() => {
+        onLogin={(domainId) => {
           setIsAuthenticated(true);
+          initializeCase(domainId);
         }}
       />
     );

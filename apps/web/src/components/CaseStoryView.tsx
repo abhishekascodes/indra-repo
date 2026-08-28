@@ -3,9 +3,14 @@ import confetti from 'canvas-confetti';
 import {
   Sparkles, AlertTriangle, CheckCircle2, FileText, Send, Lock,
   Check, ShieldCheck, GitFork, X, Zap, Scale, Printer, Award,
-  Search, Eye, HelpCircle
+  Search, Eye, HelpCircle, GitCompare, Fingerprint, Network, Cpu
 } from 'lucide-react';
-import type { Case, ActionDraft, Provenance } from '../types';
+import type { Case, ActionDraft } from '../types';
+import { EpistemicLedgerModal } from './EpistemicLedgerModal';
+import { ActionGraphModal } from './ActionGraphModal';
+import { IdentityEntropyModal } from './IdentityEntropyModal';
+import { CounterfactualModal } from './CounterfactualModal';
+import { SystemicFailuresModal } from './SystemicFailuresModal';
 
 interface CaseStoryViewProps {
   currentCase: Case;
@@ -15,7 +20,6 @@ interface CaseStoryViewProps {
   onExecuteAutopilot: () => void;
   onHighlightCausalChain: (nodeIds: string[]) => void;
   onViewGraph: () => void;
-  onSelectProvenance?: (prov: Provenance | null) => void;
   isLoading: boolean;
 }
 
@@ -32,6 +36,11 @@ export const CaseStoryView: React.FC<CaseStoryViewProps> = ({
   const [viewingLetterAction, setViewingLetterAction] = useState<ActionDraft | null>(null);
   const [showCertificate, setShowCertificate] = useState(false);
   const [showLegalLibrary, setShowLegalLibrary] = useState(false);
+  const [showEpistemicLedger, setShowEpistemicLedger] = useState(false);
+  const [showActionGraph, setShowActionGraph] = useState(false);
+  const [showIdentityEntropy, setShowIdentityEntropy] = useState(false);
+  const [showCounterfactual, setShowCounterfactual] = useState(false);
+  const [showSystemicFailures, setShowSystemicFailures] = useState(false);
   const [legalSearch, setLegalSearch] = useState('');
 
   const topCause = currentCase.candidate_causes?.[0];
@@ -97,23 +106,60 @@ export const CaseStoryView: React.FC<CaseStoryViewProps> = ({
             </div>
           </div>
 
-          <div className="flex items-center space-x-2.5">
+          <div className="flex items-center space-x-2 flex-wrap gap-y-2">
+            {/* Progressive Disclosure: Frontier Intelligence Buttons */}
+            <button
+              onClick={() => setShowEpistemicLedger(true)}
+              className="px-3 py-2 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200 rounded-xl text-xs font-bold flex items-center space-x-1.5 transition-all cursor-pointer shadow-2xs"
+              title="Audit Epistemic Ledger (Why INDRA believes this)"
+            >
+              <Cpu className="w-3.5 h-3.5 text-indigo-600" />
+              <span>Epistemic Ledger</span>
+            </button>
+
+            <button
+              onClick={() => setShowCounterfactual(true)}
+              className="px-3 py-2 bg-purple-50 hover:bg-purple-100 text-purple-700 border border-purple-200 rounded-xl text-xs font-bold flex items-center space-x-1.5 transition-all cursor-pointer shadow-2xs"
+              title="Simulate What-If Intervention"
+            >
+              <GitCompare className="w-3.5 h-3.5 text-purple-600" />
+              <span>Simulate What-If</span>
+            </button>
+
+            <button
+              onClick={() => setShowIdentityEntropy(true)}
+              className="px-3 py-2 bg-teal-50 hover:bg-teal-100 text-teal-700 border border-teal-200 rounded-xl text-xs font-bold flex items-center space-x-1.5 transition-all cursor-pointer shadow-2xs"
+              title="Inspect Cross-Registry Identity Entropy"
+            >
+              <Fingerprint className="w-3.5 h-3.5 text-teal-600" />
+              <span>Identity Coherence</span>
+            </button>
+
+            <button
+              onClick={() => setShowSystemicFailures(true)}
+              className="px-3 py-2 bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 rounded-xl text-xs font-bold flex items-center space-x-1.5 transition-all cursor-pointer shadow-2xs"
+              title="View Macro Bureaucratic Failure Clusters"
+            >
+              <Network className="w-3.5 h-3.5 text-rose-600" />
+              <span>Systemic Patterns</span>
+            </button>
+
             {/* Run Autonomous Resolution Button */}
             {!isResolved && (
               <button
                 onClick={handleAutopilotWithConfetti}
                 disabled={isLoading}
-                className="px-4 py-2.5 bg-slate-950 hover:bg-slate-800 text-white rounded-xl text-xs font-black flex items-center space-x-2 transition-all shadow-md shadow-slate-900/10 active:scale-95 disabled:opacity-50 cursor-pointer"
+                className="px-4 py-2 bg-slate-950 hover:bg-slate-800 text-white rounded-xl text-xs font-black flex items-center space-x-2 transition-all shadow-md shadow-slate-900/10 active:scale-95 disabled:opacity-50 cursor-pointer"
               >
                 <Zap className="w-4 h-4 text-amber-400 fill-amber-400" />
-                <span>Autonomous Resolution (Autopilot)</span>
+                <span>Autopilot</span>
               </button>
             )}
 
             {isResolved && (
               <button
                 onClick={() => setShowCertificate(true)}
-                className="px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-black flex items-center space-x-1.5 transition-all shadow-md shadow-emerald-600/20 active:scale-95 cursor-pointer"
+                className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-black flex items-center space-x-1.5 transition-all shadow-md shadow-emerald-600/20 active:scale-95 cursor-pointer"
               >
                 <Award className="w-4 h-4 text-amber-300" />
                 <span>Audit Certificate</span>
@@ -122,10 +168,10 @@ export const CaseStoryView: React.FC<CaseStoryViewProps> = ({
 
             <button
               onClick={() => setShowLegalLibrary(true)}
-              className="px-3.5 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-bold flex items-center space-x-1.5 transition-all border border-slate-200 cursor-pointer"
+              className="px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-bold flex items-center space-x-1.5 transition-all border border-slate-200 cursor-pointer"
             >
               <Scale className="w-4 h-4 text-slate-600" />
-              <span>Statutory Framework</span>
+              <span>Statutory Laws</span>
             </button>
           </div>
         </div>
@@ -184,13 +230,22 @@ export const CaseStoryView: React.FC<CaseStoryViewProps> = ({
               </h3>
             </div>
 
-            <button
-              onClick={handleViewReasoning}
-              className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-black rounded-xl shadow-xs transition-all flex items-center space-x-1.5 cursor-pointer active:scale-95"
-            >
-              <GitFork className="w-4 h-4 text-amber-300" />
-              <span>VIEW REASONING IN GRAPH</span>
-            </button>
+            <div className="flex items-center space-x-2">
+              <button
+                onClick={() => setShowEpistemicLedger(true)}
+                className="px-3.5 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold rounded-xl border border-slate-200 transition-all cursor-pointer"
+              >
+                Inspect Epistemic Trail
+              </button>
+
+              <button
+                onClick={handleViewReasoning}
+                className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-black rounded-xl shadow-xs transition-all flex items-center space-x-1.5 cursor-pointer active:scale-95"
+              >
+                <GitFork className="w-4 h-4 text-amber-300" />
+                <span>VIEW REASONING IN GRAPH</span>
+              </button>
+            </div>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-3 pt-2 text-xs">
@@ -308,13 +363,23 @@ export const CaseStoryView: React.FC<CaseStoryViewProps> = ({
 
       {/* 4. Action Center & Resolution Controls */}
       <div className="bg-white rounded-3xl border border-slate-200/90 p-6 shadow-sm space-y-5">
-        <div>
-          <h3 className="text-xs font-black text-slate-900 uppercase tracking-wider">
-            Administrative Action Hub
-          </h3>
-          <p className="text-xs text-slate-500 mt-0.5">
-            Authorize administrative actions with mandatory citizen consent, submit to portals, and verify resolutions.
-          </p>
+        <div className="flex items-center justify-between">
+          <div>
+            <h3 className="text-xs font-black text-slate-900 uppercase tracking-wider">
+              Administrative Action Hub
+            </h3>
+            <p className="text-xs text-slate-500 mt-0.5">
+              Authorize administrative actions with mandatory citizen consent, submit to portals, and verify resolutions.
+            </p>
+          </div>
+
+          <button
+            onClick={() => setShowActionGraph(true)}
+            className="px-3.5 py-1.5 bg-amber-50 hover:bg-amber-100 text-amber-900 border border-amber-300 rounded-xl text-xs font-bold flex items-center space-x-1.5 transition-all cursor-pointer shadow-2xs"
+          >
+            <Zap className="w-3.5 h-3.5 text-amber-600" />
+            <span>Evaluate Interventions (ERU)</span>
+          </button>
         </div>
 
         {/* Explicit WAITING Notice */}
@@ -501,6 +566,42 @@ export const CaseStoryView: React.FC<CaseStoryViewProps> = ({
           </div>
         </div>
       </div>
+
+      {/* Frontier Modals */}
+      {showEpistemicLedger && (
+        <EpistemicLedgerModal
+          currentCase={currentCase}
+          onClose={() => setShowEpistemicLedger(false)}
+        />
+      )}
+
+      {showActionGraph && (
+        <ActionGraphModal
+          currentCase={currentCase}
+          onClose={() => setShowActionGraph(false)}
+        />
+      )}
+
+      {showIdentityEntropy && (
+        <IdentityEntropyModal
+          currentCase={currentCase}
+          onClose={() => setShowIdentityEntropy(false)}
+        />
+      )}
+
+      {showCounterfactual && (
+        <CounterfactualModal
+          currentCase={currentCase}
+          onClose={() => setShowCounterfactual(false)}
+        />
+      )}
+
+      {showSystemicFailures && (
+        <SystemicFailuresModal
+          currentCase={currentCase}
+          onClose={() => setShowSystemicFailures(false)}
+        />
+      )}
 
       {/* Modal 1: Legal Petition Dossier */}
       {viewingLetterAction && (

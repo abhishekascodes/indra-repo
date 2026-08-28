@@ -116,37 +116,44 @@ def run_realistic_demo_recording():
         human_click(page, enter_btn, post_pause=2.0)
         inject_custom_mouse_cursor(page)
 
-        # Step 2: Case Situation & Diagnostic Intelligence (00:06 - 00:14)
-        print("[08s] Reviewing Diagnostic Summary & Cross-Domain Flow...")
+        # Step 2: Open Architecture Blueprint (00:06 - 00:10)
+        arch_btn = page.locator("button:has-text('Architecture')")
+        print("[06s] Inspecting INDRA Core Architecture Blueprint...")
+        human_click(page, arch_btn, post_pause=2.0)
+        close_arch = page.locator("button:has-text('Close Blueprint')")
+        human_click(page, close_arch, post_pause=1.0)
+
+        # Step 3: Case Situation & Diagnostic Intelligence (00:10 - 00:18)
+        print("[10s] Reviewing Root Cause Hypothesis & Cross-Domain Flow...")
         page.wait_for_selector("text=Case Situation & Diagnostic Intelligence")
         time.sleep(2.0)
 
-        # Step 3: Inspect Generated Legal Petition Dossier (00:14 - 00:21)
+        # Step 4: Inspect Generated Legal Petition Dossier (00:18 - 00:24)
         inspect_dossier = page.locator("button:has-text('Inspect Formal Legal Petition Dossier')").first
-        print("[14s] Inspecting Legal Petition Dossier...")
+        print("[18s] Inspecting Legal Petition Dossier...")
         human_click(page, inspect_dossier, post_pause=2.5)
 
         close_dossier = page.locator("button:has-text('Close Petition')")
         human_click(page, close_dossier, post_pause=1.0)
 
-        # Step 4: Grant Citizen Consent (00:21 - 00:26)
+        # Step 5: Grant Citizen Consent (00:24 - 00:28)
         consent_btn = page.locator("button:has-text('1. Authorize Action')").first
-        print("[21s] Granting Citizen Consent Authorization...")
+        print("[24s] Granting Citizen Consent Authorization...")
         human_click(page, consent_btn, post_pause=1.8)
 
-        # Step 5: Submit to Bank Portal (00:26 - 00:31)
+        # Step 6: Submit to Bank Portal (00:28 - 00:32)
         submit_btn = page.locator("button:has-text('2. Submit to Bank')").first
-        print("[26s] Submitting representation to Bank Portal...")
+        print("[28s] Submitting representation to Bank Portal...")
         human_click(page, submit_btn, post_pause=2.0)
 
-        # Step 6: Fast Forward +15 Days (SLA Expiry & Auto-Escalation) (00:31 - 00:37)
+        # Step 7: Fast Forward +15 Days (SLA Expiry & Auto-Escalation) (00:32 - 00:38)
         ff_btn = page.locator("button:has-text('+15d SLA')")
-        print("[31s] Fast-forwarding +15 days to test statutory SLA...")
+        print("[32s] Fast-forwarding +15 days to test statutory SLA...")
         human_click(page, ff_btn, post_pause=2.5)
 
-        # Step 7: PFMS Recovery Disbursal & Crediting Rs. 48,000 (00:37 - 00:44)
+        # Step 8: PFMS Recovery Disbursal & Crediting Rs. 48,000 (00:38 - 00:44)
         disburse_btn = page.locator("button:has-text('Verify & Execute PFMS Disbursal')")
-        print("[37s] Finalizing PFMS Disbursal & Crediting Rs. 48,000...")
+        print("[38s] Finalizing PFMS Disbursal & Crediting Rs. 48,000...")
         human_click(page, disburse_btn, post_pause=2.5)
 
         # View Resolution Certificate
@@ -156,12 +163,12 @@ def run_realistic_demo_recording():
         done_cert = page.locator("button:has-text('Done')")
         human_click(page, done_cert, post_pause=1.0)
 
-        # Step 8: React Flow Case Graph Canvas (00:44 - 00:50)
+        # Step 9: React Flow Case Graph Canvas (00:44 - 00:50)
         graph_tab = page.locator("button:has-text('Case Graph Topology')")
         print("[45s] Exploring React Flow Case Graph Canvas...")
         human_click(page, graph_tab, post_pause=3.0)
 
-        # Step 9: Evidence Vault (00:50 - 00:54)
+        # Step 10: Evidence Vault (00:50 - 00:54)
         evidence_tab = page.locator("button:has-text('Evidence Vault & Provenance')")
         print("[50s] Exploring Evidence Vault & Document Sheets...")
         human_click(page, evidence_tab, post_pause=1.5)
@@ -170,18 +177,13 @@ def run_realistic_demo_recording():
         if doc_buttons.count() >= 2:
             human_click(page, doc_buttons.nth(1), post_pause=1.5)
 
-        # Step 10: Switch to Second Domain EPFO (00:52 - 00:55)
+        # Step 11: Switch to Second Domain EPFO (00:54 - 00:57)
         epfo_btn = page.locator("button:has-text('[2] EPFO')")
-        print("[52s] Switching to Second Domain (EPFO)...")
+        print("[54s] Switching to Second Domain (EPFO)...")
         human_click(page, epfo_btn, post_pause=2.0)
 
-        # Step 11: Switch to Third Domain PMAY Housing (00:55 - 00:58)
-        pmay_btn = page.locator("button:has-text('[3] PMAY')")
-        print("[55s] Switching to Third Domain (PMAY-G Housing)...")
-        human_click(page, pmay_btn, post_pause=2.0)
-
         logout_btn = page.locator("button[title='Log Out (Return to Demo Login)']")
-        print("[58s] Logging out to Sandbox Gateway...")
+        print("[57s] Logging out to Sandbox Gateway...")
         human_click(page, logout_btn, post_pause=1.5)
 
         page.close()

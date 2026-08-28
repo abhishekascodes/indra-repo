@@ -2,15 +2,20 @@ import React, { useState } from 'react';
 import {
   Shield, Clock, RotateCcw,
   Sparkles, Layers, FileText, Volume2, VolumeX, LogOut,
-  Cpu, Sliders, Play, AlertTriangle
+  Cpu, Sliders, Play, AlertTriangle, Bug, History, Database,
+  ShieldCheck, ShieldAlert
 } from 'lucide-react';
 import type { Case, AgentState } from '../types';
 import { ArchitectureView } from './ArchitectureView';
+import { PolicyGuardrailsModal } from './PolicyGuardrailsModal';
+import { RedTeamLabModal } from './RedTeamLabModal';
+
+export type ActiveViewType = 'story' | 'debugger' | 'replay' | 'graph' | 'evidence' | 'memory' | 'timeline';
 
 interface HeaderProps {
   currentCase: Case | null;
-  activeView: 'story' | 'graph' | 'evidence' | 'timeline';
-  onSelectView: (view: 'story' | 'graph' | 'evidence' | 'timeline') => void;
+  activeView: ActiveViewType;
+  onSelectView: (view: ActiveViewType) => void;
   onAdvanceTime: (days: number) => void;
   onSelectDomain: (domainId: string) => void;
   onSimulateEvent?: (eventType: string) => void;
@@ -47,6 +52,8 @@ export const Header: React.FC<HeaderProps> = ({
 }) => {
   const [isPlayingAudio, setIsPlayingAudio] = useState(false);
   const [showArchModal, setShowArchModal] = useState(false);
+  const [showGuardrailsModal, setShowGuardrailsModal] = useState(false);
+  const [showRedTeamModal, setShowRedTeamModal] = useState(false);
   const [showDemoMenu, setShowDemoMenu] = useState(false);
 
   const stateCfg = currentCase
@@ -81,7 +88,7 @@ export const Header: React.FC<HeaderProps> = ({
 
   return (
     <>
-      <header className="bg-white border-b border-slate-200 select-none z-30 shadow-xs flex flex-col">
+      <header className="bg-white border-b border-slate-200 select-none z-30 shadow-xs flex flex-col font-sans">
         {/* Top Main Command Bar */}
         <div className="h-14 px-6 flex items-center justify-between">
           {/* Brand & Domain Toggle */}
@@ -94,10 +101,10 @@ export const Header: React.FC<HeaderProps> = ({
                 <div className="flex items-center space-x-1.5">
                   <span className="font-black text-base tracking-tight text-slate-900">INDRA</span>
                   <span className="text-[10px] font-black px-1.5 py-0.2 bg-slate-100 text-slate-600 rounded border border-slate-200">
-                    CORE
+                    HYPERVISOR
                   </span>
                 </div>
-                <p className="text-[10px] text-slate-400 font-medium -mt-0.5">Causal Agency Engine</p>
+                <p className="text-[10px] text-slate-400 font-medium -mt-0.5">Counterfactual Administrative Control</p>
               </div>
             </div>
 
@@ -142,7 +149,27 @@ export const Header: React.FC<HeaderProps> = ({
               title="Voice Briefing"
             >
               {isPlayingAudio ? <VolumeX className="w-3.5 h-3.5" /> : <Volume2 className="w-3.5 h-3.5 text-indigo-600" />}
-              <span>{isPlayingAudio ? 'Stop Voice' : 'Voice Briefing'}</span>
+              <span>{isPlayingAudio ? 'Stop Voice' : 'Voice'}</span>
+            </button>
+
+            {/* Guardrails Button */}
+            <button
+              onClick={() => setShowGuardrailsModal(true)}
+              className="px-3 py-1.5 text-xs font-bold rounded-xl flex items-center space-x-1.5 transition-all border border-slate-200 bg-slate-100 text-slate-700 hover:bg-slate-200 cursor-pointer"
+              title="Inspect Policy-as-Code Guardrails"
+            >
+              <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
+              <span>Guardrails</span>
+            </button>
+
+            {/* Red Team Simulator Button */}
+            <button
+              onClick={() => setShowRedTeamModal(true)}
+              className="px-3 py-1.5 text-xs font-bold rounded-xl flex items-center space-x-1.5 transition-all border border-slate-200 bg-slate-100 text-slate-700 hover:bg-slate-200 cursor-pointer"
+              title="Open Red Team Adversarial Simulator"
+            >
+              <ShieldAlert className="w-3.5 h-3.5 text-red-600" />
+              <span>Red Team</span>
             </button>
 
             {/* Architecture Blueprint Button */}
@@ -166,7 +193,7 @@ export const Header: React.FC<HeaderProps> = ({
                 title="Demo Control Center"
               >
                 <Sliders className="w-3.5 h-3.5 text-slate-600" />
-                <span>Demo Controls</span>
+                <span>Controls</span>
               </button>
 
               {showDemoMenu && (
@@ -246,24 +273,48 @@ export const Header: React.FC<HeaderProps> = ({
           </div>
         </div>
 
-        {/* Bottom Full-Width View Switcher Tabs */}
-        <div className="h-11 px-6 bg-slate-50/90 border-t border-slate-200/80 flex items-center justify-between">
+        {/* Bottom Full-Width View Switcher Tabs (All 7 Views) */}
+        <div className="h-11 px-6 bg-slate-50/90 border-t border-slate-200/80 flex items-center justify-between overflow-x-auto scrollbar-none">
           <div className="flex items-center space-x-1">
             <button
               onClick={() => onSelectView('story')}
-              className={`px-4 py-1.5 text-xs font-bold rounded-lg transition-all flex items-center space-x-2 cursor-pointer ${
+              className={`px-3.5 py-1.5 text-xs font-bold rounded-lg transition-all flex items-center space-x-1.5 cursor-pointer flex-shrink-0 ${
                 activeView === 'story'
                   ? 'bg-white text-slate-900 shadow-xs border border-slate-200 font-black'
                   : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
               }`}
             >
               <Sparkles className="w-3.5 h-3.5 text-amber-500" />
-              <span>Case Story & Action Hub</span>
+              <span>Case Story & Actions</span>
+            </button>
+
+            <button
+              onClick={() => onSelectView('debugger')}
+              className={`px-3.5 py-1.5 text-xs font-bold rounded-lg transition-all flex items-center space-x-1.5 cursor-pointer flex-shrink-0 ${
+                activeView === 'debugger'
+                  ? 'bg-white text-slate-900 shadow-xs border border-slate-200 font-black'
+                  : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
+              }`}
+            >
+              <Bug className="w-3.5 h-3.5 text-amber-600" />
+              <span>Admin Debugger</span>
+            </button>
+
+            <button
+              onClick={() => onSelectView('replay')}
+              className={`px-3.5 py-1.5 text-xs font-bold rounded-lg transition-all flex items-center space-x-1.5 cursor-pointer flex-shrink-0 ${
+                activeView === 'replay'
+                  ? 'bg-white text-slate-900 shadow-xs border border-slate-200 font-black'
+                  : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
+              }`}
+            >
+              <History className="w-3.5 h-3.5 text-indigo-600" />
+              <span>Flight Recorder (Replay)</span>
             </button>
 
             <button
               onClick={() => onSelectView('graph')}
-              className={`px-4 py-1.5 text-xs font-bold rounded-lg transition-all flex items-center space-x-2 cursor-pointer ${
+              className={`px-3.5 py-1.5 text-xs font-bold rounded-lg transition-all flex items-center space-x-1.5 cursor-pointer flex-shrink-0 ${
                 activeView === 'graph'
                   ? 'bg-white text-slate-900 shadow-xs border border-slate-200 font-black'
                   : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
@@ -275,32 +326,44 @@ export const Header: React.FC<HeaderProps> = ({
 
             <button
               onClick={() => onSelectView('evidence')}
-              className={`px-4 py-1.5 text-xs font-bold rounded-lg transition-all flex items-center space-x-2 cursor-pointer ${
+              className={`px-3.5 py-1.5 text-xs font-bold rounded-lg transition-all flex items-center space-x-1.5 cursor-pointer flex-shrink-0 ${
                 activeView === 'evidence'
                   ? 'bg-white text-slate-900 shadow-xs border border-slate-200 font-black'
                   : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
               }`}
             >
               <FileText className="w-3.5 h-3.5 text-emerald-500" />
-              <span>Evidence Vault & Provenance</span>
+              <span>Evidence Vault</span>
+            </button>
+
+            <button
+              onClick={() => onSelectView('memory')}
+              className={`px-3.5 py-1.5 text-xs font-bold rounded-lg transition-all flex items-center space-x-1.5 cursor-pointer flex-shrink-0 ${
+                activeView === 'memory'
+                  ? 'bg-white text-slate-900 shadow-xs border border-slate-200 font-black'
+                  : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
+              }`}
+            >
+              <Database className="w-3.5 h-3.5 text-blue-500" />
+              <span>Case Memory</span>
             </button>
 
             <button
               onClick={() => onSelectView('timeline')}
-              className={`px-4 py-1.5 text-xs font-bold rounded-lg transition-all flex items-center space-x-2 cursor-pointer ${
+              className={`px-3.5 py-1.5 text-xs font-bold rounded-lg transition-all flex items-center space-x-1.5 cursor-pointer flex-shrink-0 ${
                 activeView === 'timeline'
                   ? 'bg-white text-slate-900 shadow-xs border border-slate-200 font-black'
                   : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
               }`}
             >
               <Clock className="w-3.5 h-3.5 text-slate-500" />
-              <span>Chronology & Timeline</span>
+              <span>Timeline</span>
             </button>
           </div>
 
           {/* Case Metadata Chip */}
           {currentCase && (
-            <div className="hidden sm:flex items-center space-x-3 text-xs text-slate-500">
+            <div className="hidden sm:flex items-center space-x-3 text-xs text-slate-500 flex-shrink-0">
               <span className="font-mono text-[10px] bg-slate-200/80 px-2 py-0.5 rounded text-slate-700 font-bold">
                 SYNTHETIC ENVIRONMENT
               </span>
@@ -312,11 +375,25 @@ export const Header: React.FC<HeaderProps> = ({
         </div>
       </header>
 
-      {/* Architecture Blueprint Modal */}
+      {/* Modals */}
       {showArchModal && (
         <ArchitectureView
           activeDomainId={currentCase?.domain_id || 'dbt_failure'}
           onClose={() => setShowArchModal(false)}
+        />
+      )}
+
+      {showGuardrailsModal && (
+        <PolicyGuardrailsModal
+          currentCase={currentCase!}
+          onClose={() => setShowGuardrailsModal(false)}
+        />
+      )}
+
+      {showRedTeamModal && (
+        <RedTeamLabModal
+          currentCase={currentCase!}
+          onClose={() => setShowRedTeamModal(false)}
         />
       )}
     </>

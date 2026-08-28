@@ -1,9 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { Header } from './components/Header';
+import { Header, type ActiveViewType } from './components/Header';
 import { CaseStoryView } from './components/CaseStoryView';
 import { EvidenceVault } from './components/EvidenceVault';
 import { CaseGraphView } from './components/CaseGraphView';
 import { TimelineRail } from './components/TimelineRail';
+import { AdministrativeDebugger } from './components/AdministrativeDebugger';
+import { FlightRecorderReplay } from './components/FlightRecorderReplay';
+import { CaseMemoryPanel } from './components/CaseMemoryPanel';
 import { LoginScreen } from './components/LoginScreen';
 import { api } from './services/api';
 import type { Case, UIGraphData, Provenance } from './types';
@@ -17,7 +20,7 @@ export const App: React.FC = () => {
   const [graphData, setGraphData] = useState<UIGraphData | null>(null);
   const [activeProvenance, setActiveProvenance] = useState<Provenance | null>(null);
   const [highlightedChainNodeIds, setHighlightedChainNodeIds] = useState<string[]>([]);
-  const [activeView, setActiveView] = useState<'story' | 'graph' | 'evidence' | 'timeline'>('story');
+  const [activeView, setActiveView] = useState<ActiveViewType>('story');
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [toastMessage, setToastMessage] = useState<{ text: string; type: 'success' | 'info' | 'warning' } | null>(null);
 
@@ -261,7 +264,21 @@ export const App: React.FC = () => {
           />
         )}
 
-        {/* VIEW 2: CASE GRAPH TOPOLOGY */}
+        {/* VIEW 2: ADMINISTRATIVE DEBUGGER ("DevTools for Bureaucracy") */}
+        {activeView === 'debugger' && currentCase && (
+          <AdministrativeDebugger
+            currentCase={currentCase}
+          />
+        )}
+
+        {/* VIEW 3: BITEMPORAL FLIGHT RECORDER (Historical Replay) */}
+        {activeView === 'replay' && currentCase && (
+          <FlightRecorderReplay
+            currentCase={currentCase}
+          />
+        )}
+
+        {/* VIEW 4: CASE GRAPH TOPOLOGY */}
         {activeView === 'graph' && (
           <CaseGraphView
             graphData={graphData}
@@ -270,7 +287,7 @@ export const App: React.FC = () => {
           />
         )}
 
-        {/* VIEW 3: EVIDENCE VAULT & PROVENANCE */}
+        {/* VIEW 5: EVIDENCE VAULT & PROVENANCE */}
         {activeView === 'evidence' && (
           <EvidenceVault
             documents={currentCase?.documents || []}
@@ -279,7 +296,14 @@ export const App: React.FC = () => {
           />
         )}
 
-        {/* VIEW 4: CHRONOLOGY & TIMELINE */}
+        {/* VIEW 6: PERSISTENT CASE MEMORY & CONTEXT */}
+        {activeView === 'memory' && currentCase && (
+          <CaseMemoryPanel
+            currentCase={currentCase}
+          />
+        )}
+
+        {/* VIEW 7: CHRONOLOGY & TIMELINE */}
         {activeView === 'timeline' && currentCase && (
           <div className="h-full p-8 overflow-y-auto bg-slate-50 flex flex-col justify-center">
             <div className="max-w-4xl mx-auto w-full bg-white rounded-2xl border border-slate-200 p-6 shadow-sm">

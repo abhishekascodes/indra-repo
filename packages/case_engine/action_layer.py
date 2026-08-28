@@ -4,7 +4,7 @@ Drafts formal legal/administrative representations, manages consent, and coordin
 """
 
 from typing import List, Dict, Any, Optional
-from datetime import datetime
+from datetime import datetime, timezone
 from packages.schemas.models import (
     Case, ActionDraft, ActionStatus, TimelineEvent, EpistemicCategory, Node, NodeType, EdgeType
 )
@@ -20,9 +20,9 @@ class ActionLayer:
         Generates actionable administrative steps based on identified root causes and triggered rules.
         """
         actions: List[ActionDraft] = []
+        now_str = datetime.now(timezone.utc).strftime('%d %B %Y')
 
         if case.domain_id == "dbt_failure":
-            # Primary Action: NPCI Mandate and Bank Remediation
             doc_citations = [f"Doc Ref #{d.id} ({d.filename})" for d in case.documents]
             content = f"""TO:
 The Branch Manager,
@@ -41,7 +41,7 @@ EVIDENCE AND GROUNDS:
 1. Scholarship Sanction: The Department of Social Welfare has approved and sanctioned the scholarship under Application ID #{case.id}.
 2. Transaction Failure: PFMS Central Gateway attempted credit transfer which failed on destination bank routing due to inactive NPCI APBS mapping.
 3. Supporting Documents Attached:
-   {chr(10).join(['   - ' + c for c in doc_citations])}
+{chr(10).join(['   - ' + c for c in doc_citations])}
 
 STATUTORY STATUTES & DIRECTIVES:
 - RBI Master Direction on Aadhaar Payment Bridge System (APBS) Mapping (DPSS.CO.PD.No.1810/02.14.006/2015-16)
@@ -52,7 +52,7 @@ PRAYER / REQUESTED ACTION:
 2. Confirm APBS active status and issue NPCI Mapper Update Acknowledgment Slip.
 3. Remove any unauthorized full debit freeze pursuant to RBI Consumer Protection Directives.
 
-DATE: {datetime.utcnow().strftime('%d %B %Y')}
+DATE: {now_str}
 CITIZEN SIGNATURE / CONSENT: [PENDING CITIZEN CONFIRMATION]
 """
             action = ActionDraft(
@@ -60,13 +60,13 @@ CITIZEN SIGNATURE / CONSENT: [PENDING CITIZEN CONFIRMATION]
                 action_type="NPCI_MAPPING_UPDATE_REQUEST",
                 target_institution="Canara Bank / NPCI Lead Branch",
                 purpose="Update NPCI APBS Aadhaar Seeding & Remove Bank Account Debit Restriction",
-                supporting_evidence_ids=[d.id for d in case.documents],
-                rule_id="RULE_DBT_BNS_410_ACCOUNT_RESTRICTION",
+                legal_basis="RBI Master Direction DPSS.CO.PD.No.1810/02.14.006/2015-16 & DBT Mission Guidelines",
+                evidence_ids=[d.id for d in case.documents],
                 generated_content=content,
                 status=ActionStatus.PENDING_APPROVAL,
                 citizen_consent=False,
-                created_at=datetime.utcnow().isoformat(),
-                response_deadline=15  # 15 days SLA
+                created_at=datetime.now(timezone.utc).isoformat(),
+                response_deadline=15
             )
             actions.append(action)
 
@@ -92,19 +92,19 @@ PRAYER:
 1. Update Date of Exit in Field Office Master.
 2. Permit online re-submission and settlement of Form 19 Claim.
 
-DATE: {datetime.utcnow().strftime('%d %B %Y')}
+DATE: {now_str}
 """
             action = ActionDraft(
                 id=f"act_epfo_{case.id}",
                 action_type="EPFO_JOINT_DECLARATION_SUBMISSION",
                 target_institution="EPFO Regional Office",
                 purpose="Submit Joint Declaration for Date of Exit Correction",
-                supporting_evidence_ids=[d.id for d in case.documents],
-                rule_id="RULE_EPFO_JOINT_DECLARATION_REVISED_SOP",
+                legal_basis="EPFO Standard Operating Procedure (SOP) Version 3.0 (2024) on Joint Declarations",
+                evidence_ids=[d.id for d in case.documents],
                 generated_content=content,
                 status=ActionStatus.PENDING_APPROVAL,
                 citizen_consent=False,
-                created_at=datetime.utcnow().isoformat(),
+                created_at=datetime.now(timezone.utc).isoformat(),
                 response_deadline=15
             )
             actions.append(action)
@@ -129,19 +129,19 @@ PRAYER:
 1. Modify total debit freeze to lien on disputed amount only.
 2. Issue NOC to Bank Branch for restoring regular account operations.
 
-DATE: {datetime.utcnow().strftime('%d %B %Y')}
+DATE: {now_str}
 """
             action = ActionDraft(
                 id=f"act_cyber_{case.id}",
                 action_type="BANK_NODAL_LIEN_LIMITATION_PETITION",
                 target_institution="Cyber Police Station & Bank Nodal Office",
                 purpose="Petition for Partial Lien Restriction and Account Unfreeze NOC",
-                supporting_evidence_ids=[d.id for d in case.documents],
-                rule_id="RULE_CYBER_LIEN_LIMITATION_TO_DISPUTED_AMOUNT",
+                legal_basis="Sec 102 CrPC / Sec 107 BNSS & High Court Proportionality Directives",
+                evidence_ids=[d.id for d in case.documents],
                 generated_content=content,
                 status=ActionStatus.PENDING_APPROVAL,
                 citizen_consent=False,
-                created_at=datetime.utcnow().isoformat(),
+                created_at=datetime.now(timezone.utc).isoformat(),
                 response_deadline=7
             )
             actions.append(action)

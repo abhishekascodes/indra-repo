@@ -5,7 +5,7 @@ Governs the life cycle of a case with deterministic transition validation.
 
 from typing import Dict, List, Set, Tuple, Optional
 from packages.schemas.models import AgentState, Case, ActionStatus, TimelineEvent, EpistemicCategory
-from datetime import datetime
+from datetime import datetime, timezone
 
 
 class StateMachineError(Exception):
@@ -24,7 +24,7 @@ class CaseStateMachine:
         AgentState.SUBMITTED: {AgentState.WAITING, AgentState.BLOCKED},
         AgentState.WAITING: {AgentState.RESPONSE_RECEIVED, AgentState.ESCALATION_REQUIRED, AgentState.BLOCKED},
         AgentState.RESPONSE_RECEIVED: {AgentState.VERIFICATION, AgentState.ACTION_REQUIRED, AgentState.BLOCKED},
-        AgentState.ESCALATION_REQUIRED: {AgentState.USER_APPROVAL, AgentState.ACTION_REQUIRED, AgentState.BLOCKED},
+        AgentState.ESCALATION_REQUIRED: {AgentState.RESPONSE_RECEIVED, AgentState.USER_APPROVAL, AgentState.ACTION_REQUIRED, AgentState.BLOCKED},
         AgentState.VERIFICATION: {AgentState.RESOLUTION, AgentState.ACTION_REQUIRED, AgentState.BLOCKED},
         AgentState.RESOLUTION: {AgentState.EVIDENCE_ANALYSIS},
         AgentState.BLOCKED: {AgentState.EVIDENCE_ANALYSIS, AgentState.ACTION_REQUIRED, AgentState.USER_APPROVAL}
@@ -70,7 +70,7 @@ class CaseStateMachine:
 
         prev_state = case.current_state
         case.current_state = target_state
-        case.updated_at = datetime.utcnow().isoformat()
+        case.updated_at = datetime.now(timezone.utc).isoformat()
 
         event = TimelineEvent(
             timestamp=case.updated_at,

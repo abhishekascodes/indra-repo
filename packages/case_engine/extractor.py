@@ -6,7 +6,7 @@ Processes PDFs, Images, Statements, and SMS with strict schema validation and pr
 import os
 import json
 from typing import List, Dict, Any, Optional
-from datetime import datetime
+from datetime import datetime, timezone
 from packages.schemas.models import (
     Case, CaseDocument, Node, Edge, NodeType, EdgeType, EpistemicCategory, Provenance, TimelineEvent
 )
@@ -59,7 +59,7 @@ class EvidenceExtractor:
                 id=doc_id,
                 filename=doc_info["file"],
                 file_type=doc_info.get("type", "pdf"),
-                uploaded_at=datetime.utcnow().isoformat(),
+                uploaded_at=datetime.now(timezone.utc).isoformat(),
                 page_count=1,
                 file_path=file_path,
                 preview_url=f"/api/evidence/preview/{doc_id}",
@@ -153,7 +153,7 @@ class EvidenceExtractor:
 
         # Log extraction timeline event
         event = TimelineEvent(
-            timestamp=datetime.utcnow().isoformat(),
+            timestamp=datetime.now(timezone.utc).isoformat(),
             day_offset=case.simulated_day,
             title=f"Evidence Vault Ingestion: {len(case.documents)} Documents",
             description=f"Ingested {len(case.documents)} evidence records. Extracted verified factual nodes with spatial bounding box provenance.",

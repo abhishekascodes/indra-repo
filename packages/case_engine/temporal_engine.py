@@ -4,7 +4,7 @@ Handles simulated clock advancement, statutory deadline tracking, and automatic 
 """
 
 from typing import Dict, List, Any, Optional
-from datetime import datetime, timedelta
+from datetime import datetime, timezone, timedelta
 from packages.schemas.models import (
     Case, AgentState, ActionDraft, ActionStatus, TimelineEvent, EpistemicCategory
 )
@@ -23,7 +23,7 @@ class TemporalEngine:
             return case
 
         case.simulated_day += days_to_advance
-        case.updated_at = datetime.utcnow().isoformat()
+        case.updated_at = datetime.now(timezone.utc).isoformat()
 
         # Log timeline event
         time_event = TimelineEvent(
@@ -60,8 +60,8 @@ class TemporalEngine:
                         action_type="CPGRAMS_ADMINISTRATIVE_ESCALATION",
                         target_institution="CPGRAMS (Central Public Grievance Redress & Monitoring System) / Banking Ombudsman",
                         purpose=f"Statutory Administrative Escalation for Non-Compliance with {sla}-Day SLA",
-                        supporting_evidence_ids=action.supporting_evidence_ids,
-                        rule_id="RULE_DBT_PFMS_DISBURSAL_ESCALATION",
+                        legal_basis="Citizen's Charter and DARPG Public Grievance Redress Guidelines 2024",
+                        evidence_ids=action.evidence_ids,
                         generated_content=f"""TO:
 The Directorate of Public Grievances / Banking Ombudsman / CPGRAMS,
 Government of India.
@@ -84,9 +84,9 @@ PRAYER:
 
 DATE: Day {case.simulated_day} (Simulated Clock)
 """,
-                        status=ActionStatus.PENDING_APPROVAL,
+                        status=ActionStatus.DRAFTED,
                         citizen_consent=False,
-                        created_at=datetime.utcnow().isoformat(),
+                        created_at=datetime.now(timezone.utc).isoformat(),
                         response_deadline=30
                     )
                     case.actions.append(escalation_action)

@@ -1,8 +1,7 @@
 import React, { useState } from 'react';
 import {
-  Shield, Clock, Play, RotateCcw, Sliders,
-  FilePlus, Hourglass, ChevronDown,
-  Sparkles, Layers, FileText, Volume2, VolumeX, Zap, LogOut
+  Shield, Clock, RotateCcw,
+  Sparkles, Layers, FileText, Volume2, VolumeX, LogOut
 } from 'lucide-react';
 import type { Case, AgentState } from '../types';
 
@@ -21,7 +20,7 @@ interface HeaderProps {
 
 const STATE_CONFIG: Record<AgentState, { label: string; bg: string; text: string; dot: string }> = {
   CASE_CREATED: { label: 'Case Initialized', bg: 'bg-blue-50 border-blue-200', text: 'text-blue-700', dot: 'bg-blue-600' },
-  EVIDENCE_ANALYSIS: { label: 'Evidence Analyzed', bg: 'bg-indigo-50 border-indigo-200', text: 'text-indigo-700', dot: 'bg-indigo-600' },
+  EVIDENCE_ANALYSIS: { label: 'Evidence Ingested', bg: 'bg-indigo-50 border-indigo-200', text: 'text-indigo-700', dot: 'bg-indigo-600' },
   ACTION_REQUIRED: { label: 'Action Required', bg: 'bg-amber-50 border-amber-300', text: 'text-amber-800', dot: 'bg-amber-600' },
   USER_APPROVAL: { label: 'Awaiting Citizen Consent', bg: 'bg-amber-50 border-amber-400', text: 'text-amber-900', dot: 'bg-amber-600' },
   SUBMITTED: { label: 'Submitted to Portal', bg: 'bg-cyan-50 border-cyan-300', text: 'text-cyan-800', dot: 'bg-cyan-600' },
@@ -39,20 +38,18 @@ export const Header: React.FC<HeaderProps> = ({
   onSelectView,
   onAdvanceTime,
   onSelectDomain,
-  onSimulateEvent,
-  onExecuteAutopilot,
   onReset,
   onLogout,
   isLoading,
 }) => {
-  const [showDemoMenu, setShowDemoMenu] = useState(false);
   const [isPlayingAudio, setIsPlayingAudio] = useState(false);
+  const [audioLanguage, setAudioLanguage] = useState<'en' | 'hi'>('en');
 
   const stateCfg = currentCase
     ? STATE_CONFIG[currentCase.current_state] || { label: currentCase.current_state, bg: 'bg-slate-100 border-slate-300', text: 'text-slate-700', dot: 'bg-slate-500' }
     : { label: 'Loading Case...', bg: 'bg-slate-100 border-slate-300', text: 'text-slate-700', dot: 'bg-slate-500' };
 
-  // Native Speech Synthesis for Case Briefing
+  // Native Speech Synthesis for Case Briefing (Bilingual: English & Hindi)
   const toggleVoiceBriefing = () => {
     if (!currentCase) return;
 
@@ -61,13 +58,24 @@ export const Header: React.FC<HeaderProps> = ({
       setIsPlayingAudio(false);
     } else {
       window.speechSynthesis.cancel();
-      const text = currentCase.current_state === 'RESOLUTION'
-        ? `Case reference ${currentCase.id} for citizen ${currentCase.citizen_name} is successfully resolved. The 48,000 rupee scholarship benefit has been credited.`
-        : `INDRA Case briefing for citizen ${currentCase.citizen_name}. Issue: ${currentCase.objective}. Root Cause: ${currentCase.blocker_summary}.`;
+
+      let text = '';
+      if (audioLanguage === 'hi') {
+        text = currentCase.current_state === 'RESOLUTION'
+          ? `इंद्रा केस समाधान। नागरिक ${currentCase.citizen_name} के लिए अडतालीस हज़ार रुपये की छात्रवृत्ति सफलतापूर्वक बैंक खाते में जमा कर दी गई है।`
+          : `इंद्रा नागरिक ब्रीफिंग। नागरिक: ${currentCase.citizen_name}। समस्या: ${currentCase.objective}। कारण: ${currentCase.blocker_summary}।`;
+      } else {
+        text = currentCase.current_state === 'RESOLUTION'
+          ? `Case reference ${currentCase.id} for citizen ${currentCase.citizen_name} is successfully resolved. The benefit has been credited with official UTR settlement.`
+          : `INDRA Case Briefing for citizen ${currentCase.citizen_name}. Issue: ${currentCase.objective}. Root Cause: ${currentCase.blocker_summary}.`;
+      }
 
       const utterance = new SpeechSynthesisUtterance(text);
       utterance.rate = 1.0;
       utterance.pitch = 1.0;
+      if (audioLanguage === 'hi') {
+        utterance.lang = 'hi-IN';
+      }
       utterance.onend = () => setIsPlayingAudio(false);
       utterance.onerror = () => setIsPlayingAudio(false);
 
@@ -81,7 +89,7 @@ export const Header: React.FC<HeaderProps> = ({
       {/* Top Main Command Bar */}
       <div className="h-14 px-6 flex items-center justify-between">
         {/* Brand & Domain Toggle */}
-        <div className="flex items-center space-x-6">
+        <div className="flex items-center space-x-5">
           <div className="flex items-center space-x-2.5">
             <div className="w-8 h-8 rounded-xl bg-slate-900 flex items-center justify-center shadow-xs">
               <Shield className="w-4 h-4 text-amber-500" />
@@ -90,230 +98,170 @@ export const Header: React.FC<HeaderProps> = ({
               <div className="flex items-center space-x-1.5">
                 <span className="font-extrabold text-base tracking-tight text-slate-900">INDRA</span>
                 <span className="text-[10px] font-bold px-1.5 py-0.2 bg-slate-100 text-slate-600 rounded border border-slate-200">
-                  CITIZEN AGENCY
+                  ADMINISTRATIVE AGENCY
                 </span>
               </div>
               <p className="text-[10px] text-slate-400 font-medium -mt-0.5">Multimodal Case Intelligence</p>
             </div>
           </div>
 
-          {/* Domain Segmented Switcher */}
-          <div className="hidden lg:flex items-center bg-slate-100 p-1 rounded-xl border border-slate-200 space-x-1 text-xs">
+          {/* 3-Domain Segmented Switcher */}
+          <div className="hidden lg:flex items-center bg-slate-100/80 p-1 rounded-xl border border-slate-200 space-x-1 text-xs font-semibold">
             <button
               onClick={() => onSelectDomain('dbt_failure')}
-              className={`px-3 py-1.5 rounded-lg font-bold transition-all ${
+              className={`px-3 py-1 rounded-lg transition-all cursor-pointer ${
                 currentCase?.domain_id === 'dbt_failure'
-                  ? 'bg-white text-slate-900 shadow-xs border border-slate-200'
-                  : 'text-slate-600 hover:text-slate-900'
+                  ? 'bg-white text-slate-900 shadow-xs border border-slate-200 font-bold'
+                  : 'text-slate-500 hover:text-slate-800'
               }`}
             >
-              [1] DBT Scholarship Failure (Cross-Domain)
+              [1] DBT Scholarship
             </button>
             <button
               onClick={() => onSelectDomain('epfo_claim')}
-              className={`px-3 py-1.5 rounded-lg font-bold transition-all ${
+              className={`px-3 py-1 rounded-lg transition-all cursor-pointer ${
                 currentCase?.domain_id === 'epfo_claim'
-                  ? 'bg-white text-slate-900 shadow-xs border border-slate-200'
-                  : 'text-slate-600 hover:text-slate-900'
+                  ? 'bg-white text-slate-900 shadow-xs border border-slate-200 font-bold'
+                  : 'text-slate-500 hover:text-slate-800'
               }`}
             >
-              [2] EPFO PF Claim Rejection
+              [2] EPFO PF Claim
+            </button>
+            <button
+              onClick={() => onSelectDomain('pmay_housing')}
+              className={`px-3 py-1 rounded-lg transition-all cursor-pointer ${
+                currentCase?.domain_id === 'pmay_housing'
+                  ? 'bg-white text-slate-900 shadow-xs border border-slate-200 font-bold'
+                  : 'text-slate-500 hover:text-slate-800'
+              }`}
+            >
+              [3] PMAY-G Housing
             </button>
           </div>
         </div>
 
-        {/* Live Status Pill & Simulated Clock */}
-        {currentCase && (
-          <div className="flex items-center space-x-3">
-            <div className={`px-3.5 py-1 rounded-full border ${stateCfg.bg} flex items-center space-x-2 shadow-2xs`}>
-              <span className={`w-2 h-2 rounded-full ${stateCfg.dot} animate-pulse`}></span>
-              <span className={`text-xs font-bold ${stateCfg.text}`}>
-                {stateCfg.label}
-              </span>
-            </div>
+        {/* Center: Live Case Status Badge */}
+        <div className="hidden md:flex items-center space-x-3">
+          <div className={`px-3.5 py-1.5 rounded-full border text-xs font-bold flex items-center space-x-2 ${stateCfg.bg} ${stateCfg.text}`}>
+            <span className={`w-2 h-2 rounded-full ${stateCfg.dot} animate-pulse`} />
+            <span>{stateCfg.label}</span>
+          </div>
 
-            <div className="text-xs text-slate-600 font-mono bg-slate-50 border border-slate-200 px-3 py-1 rounded-lg flex items-center space-x-1.5">
-              <Clock className="w-3.5 h-3.5 text-amber-600" />
-              <span>Day: <strong className="text-slate-900">{currentCase.simulated_day}</strong></span>
-            </div>
-
-            {/* Voice Briefing Toggle */}
+          {/* Voice Briefing Button */}
+          <div className="flex items-center bg-slate-100 rounded-xl p-0.5 border border-slate-200">
             <button
               onClick={toggleVoiceBriefing}
-              className={`p-1.5 rounded-lg border transition-all text-xs font-bold flex items-center space-x-1 ${
-                isPlayingAudio
-                  ? 'bg-amber-500 text-white border-amber-600 animate-pulse'
-                  : 'bg-slate-50 hover:bg-slate-100 text-slate-600 border-slate-200'
+              className={`px-2.5 py-1 text-xs font-bold rounded-lg flex items-center space-x-1.5 transition-all cursor-pointer ${
+                isPlayingAudio ? 'bg-indigo-600 text-white' : 'text-slate-700 hover:bg-slate-200'
               }`}
-              title="Voice Briefing"
+              title="Multimodal Voice Briefing"
             >
-              {isPlayingAudio ? <VolumeX className="w-3.5 h-3.5" /> : <Volume2 className="w-3.5 h-3.5" />}
-              <span className="hidden sm:inline">{isPlayingAudio ? 'Stop Audio' : 'Audio Brief'}</span>
+              {isPlayingAudio ? <VolumeX className="w-3.5 h-3.5" /> : <Volume2 className="w-3.5 h-3.5 text-indigo-600" />}
+              <span>{isPlayingAudio ? 'Stop Voice' : 'Voice Briefing'}</span>
+            </button>
+            <button
+              onClick={() => setAudioLanguage(audioLanguage === 'en' ? 'hi' : 'en')}
+              className="px-2 py-1 text-[10px] font-bold text-slate-500 hover:text-slate-800 uppercase"
+              title="Toggle Language (EN/HI)"
+            >
+              {audioLanguage}
             </button>
           </div>
-        )}
+        </div>
 
-        {/* Action Controls & Fast Forward */}
+        {/* Right: Fast Forward Clock & Logout */}
         <div className="flex items-center space-x-2">
-          {currentCase && (
-            <>
-              {currentCase.current_state !== 'RESOLUTION' && (
-                <button
-                  onClick={onExecuteAutopilot}
-                  disabled={isLoading}
-                  className="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-xs font-bold flex items-center space-x-1.5 transition-all shadow-xs active:scale-95 disabled:opacity-50"
-                  title="Run Autonomous Resolution"
-                >
-                  <Zap className="w-3.5 h-3.5 text-amber-300 fill-amber-300" />
-                  <span className="hidden sm:inline">Autopilot</span>
-                </button>
-              )}
+          {/* Fast-Forward SLA */}
+          <div className="flex items-center bg-slate-100 rounded-xl p-1 border border-slate-200 space-x-1">
+            <Clock className="w-3.5 h-3.5 text-slate-500 ml-1.5" />
+            <button
+              onClick={() => onAdvanceTime(15)}
+              disabled={isLoading}
+              className="px-2.5 py-1 bg-white hover:bg-slate-50 text-slate-800 text-xs font-bold rounded-lg border border-slate-200 shadow-2xs transition-all active:scale-95 cursor-pointer"
+              title="Advance time 15 days to test statutory SLA breach & CPGRAMS escalation"
+            >
+              +15d SLA
+            </button>
+          </div>
 
-              <button
-                onClick={() => onAdvanceTime(15)}
-                disabled={isLoading}
-                className="px-3.5 py-1.5 bg-amber-500 hover:bg-amber-600 text-white rounded-lg text-xs font-bold flex items-center space-x-1.5 transition-all shadow-xs active:scale-95 disabled:opacity-50"
-                title="Fast forward 15 days to test statutory SLA expiry & automatic CPGRAMS escalation"
-              >
-                <Play className="w-3 h-3 fill-white" />
-                <span>+15d SLA</span>
-              </button>
-
-              {/* Demo Adaptive Scenarios */}
-              <div className="relative">
-                <button
-                  onClick={() => setShowDemoMenu(!showDemoMenu)}
-                  className="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-xs font-bold flex items-center space-x-1.5 transition-all border border-slate-200"
-                >
-                  <Sliders className="w-3.5 h-3.5 text-slate-600" />
-                  <span>Demo</span>
-                  <ChevronDown className="w-3 h-3" />
-                </button>
-
-                {showDemoMenu && (
-                  <div className="absolute right-0 mt-1.5 w-64 bg-white border border-slate-200 rounded-xl shadow-xl p-2 z-50 space-y-1 text-xs">
-                    <div className="text-[10px] uppercase font-bold text-slate-400 px-2 py-1 border-b border-slate-100">
-                      SIMULATE REAL-WORLD EVENTS
-                    </div>
-                    <button
-                      onClick={() => {
-                        onSimulateEvent('SLA_TIMEOUT');
-                        setShowDemoMenu(false);
-                      }}
-                      className="w-full text-left p-2 rounded-lg hover:bg-red-50 text-red-700 font-semibold flex items-center space-x-2.5 transition-colors"
-                    >
-                      <Hourglass className="w-4 h-4 text-red-600 flex-shrink-0" />
-                      <div>
-                        <div className="font-bold">Trigger 15-Day SLA Timeout</div>
-                        <div className="text-[10px] text-red-500 font-normal">Auto-escalates case to CPGRAMS</div>
-                      </div>
-                    </button>
-                    <button
-                      onClick={() => {
-                        onSimulateEvent('GOV_DELAY');
-                        setShowDemoMenu(false);
-                      }}
-                      className="w-full text-left p-2 rounded-lg hover:bg-amber-50 text-amber-800 font-semibold flex items-center space-x-2.5 transition-colors"
-                    >
-                      <Clock className="w-4 h-4 text-amber-600 flex-shrink-0" />
-                      <div>
-                        <div className="font-bold">Simulate Bank Delay (+7d)</div>
-                        <div className="text-[10px] text-amber-600 font-normal">Logs institutional notice</div>
-                      </div>
-                    </button>
-                    <button
-                      onClick={() => {
-                        onSimulateEvent('NEW_EVIDENCE');
-                        setShowDemoMenu(false);
-                      }}
-                      className="w-full text-left p-2 rounded-lg hover:bg-blue-50 text-blue-700 font-semibold flex items-center space-x-2.5 transition-colors"
-                    >
-                      <FilePlus className="w-4 h-4 text-blue-600 flex-shrink-0" />
-                      <div>
-                        <div className="font-bold">Ingest Bank Receipt</div>
-                        <div className="text-[10px] text-blue-500 font-normal">Dynamic evidence reload</div>
-                      </div>
-                    </button>
-                  </div>
-                )}
-              </div>
-            </>
-          )}
-
+          {/* Reset Demo */}
           <button
             onClick={onReset}
-            disabled={isLoading}
-            className="p-2 bg-white hover:bg-slate-100 text-slate-500 hover:text-slate-800 border border-slate-200 rounded-lg text-xs transition-all shadow-xs"
-            title="Reset Simulation Environment"
+            className="p-2 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-xl transition-all border border-transparent hover:border-slate-200 cursor-pointer"
+            title="Reset Case State"
           >
-            <RotateCcw className={`w-3.5 h-3.5 ${isLoading ? 'animate-spin' : ''}`} />
+            <RotateCcw className="w-4 h-4" />
           </button>
 
+          {/* Logout */}
           <button
             onClick={onLogout}
-            className="p-2 bg-white hover:bg-red-50 text-slate-400 hover:text-red-600 border border-slate-200 rounded-lg text-xs transition-all shadow-xs"
+            className="p-2 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-xl transition-all border border-transparent hover:border-rose-200 cursor-pointer"
             title="Log Out (Return to Demo Login)"
           >
-            <LogOut className="w-3.5 h-3.5" />
+            <LogOut className="w-4 h-4" />
           </button>
         </div>
       </div>
 
-      {/* Secondary Workspace Views Navigation Bar */}
-      <div className="h-10 px-6 bg-slate-50 border-t border-slate-200 flex items-center justify-between text-xs font-bold text-slate-600">
-        <div className="flex items-center space-x-2">
+      {/* Bottom Full-Width View Switcher Tabs */}
+      <div className="h-11 px-6 bg-slate-50/90 border-t border-slate-200/80 flex items-center justify-between">
+        <div className="flex items-center space-x-1">
           <button
             onClick={() => onSelectView('story')}
-            className={`px-3.5 py-1.5 rounded-lg flex items-center space-x-1.5 transition-all ${
+            className={`px-4 py-1.5 text-xs font-bold rounded-lg transition-all flex items-center space-x-2 cursor-pointer ${
               activeView === 'story'
-                ? 'bg-indigo-600 text-white shadow-xs'
-                : 'hover:bg-slate-200/70 hover:text-slate-900'
+                ? 'bg-white text-slate-900 shadow-xs border border-slate-200 font-extrabold'
+                : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
             }`}
           >
-            <Sparkles className="w-3.5 h-3.5" />
+            <Sparkles className="w-3.5 h-3.5 text-amber-500" />
             <span>Case Story & Action Hub</span>
           </button>
 
           <button
             onClick={() => onSelectView('graph')}
-            className={`px-3.5 py-1.5 rounded-lg flex items-center space-x-1.5 transition-all ${
+            className={`px-4 py-1.5 text-xs font-bold rounded-lg transition-all flex items-center space-x-2 cursor-pointer ${
               activeView === 'graph'
-                ? 'bg-indigo-600 text-white shadow-xs'
-                : 'hover:bg-slate-200/70 hover:text-slate-900'
+                ? 'bg-white text-slate-900 shadow-xs border border-slate-200 font-extrabold'
+                : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
             }`}
           >
-            <Layers className="w-3.5 h-3.5" />
+            <Layers className="w-3.5 h-3.5 text-indigo-500" />
             <span>Case Graph Topology</span>
           </button>
 
           <button
             onClick={() => onSelectView('evidence')}
-            className={`px-3.5 py-1.5 rounded-lg flex items-center space-x-1.5 transition-all ${
+            className={`px-4 py-1.5 text-xs font-bold rounded-lg transition-all flex items-center space-x-2 cursor-pointer ${
               activeView === 'evidence'
-                ? 'bg-indigo-600 text-white shadow-xs'
-                : 'hover:bg-slate-200/70 hover:text-slate-900'
+                ? 'bg-white text-slate-900 shadow-xs border border-slate-200 font-extrabold'
+                : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
             }`}
           >
-            <FileText className="w-3.5 h-3.5" />
+            <FileText className="w-3.5 h-3.5 text-emerald-500" />
             <span>Evidence Vault & Provenance</span>
           </button>
 
           <button
             onClick={() => onSelectView('timeline')}
-            className={`px-3.5 py-1.5 rounded-lg flex items-center space-x-1.5 transition-all ${
+            className={`px-4 py-1.5 text-xs font-bold rounded-lg transition-all flex items-center space-x-2 cursor-pointer ${
               activeView === 'timeline'
-                ? 'bg-indigo-600 text-white shadow-xs'
-                : 'hover:bg-slate-200/70 hover:text-slate-900'
+                ? 'bg-white text-slate-900 shadow-xs border border-slate-200 font-extrabold'
+                : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
             }`}
           >
-            <Clock className="w-3.5 h-3.5" />
+            <Clock className="w-3.5 h-3.5 text-slate-500" />
             <span>Chronology & Timeline</span>
           </button>
         </div>
 
+        {/* Case Metadata Chip */}
         {currentCase && (
-          <div className="text-[11px] text-slate-400 font-medium font-mono hidden md:block">
-            Case: <span className="text-slate-700 font-bold">{currentCase.id}</span> | Citizen: <span className="text-slate-700 font-bold">{currentCase.citizen_name}</span>
+          <div className="hidden sm:flex items-center space-x-3 text-xs text-slate-500">
+            <span>Citizen: <strong className="text-slate-800">{currentCase.citizen_name}</strong></span>
+            <span>•</span>
+            <span className="font-mono text-slate-600">{currentCase.id}</span>
           </div>
         )}
       </div>

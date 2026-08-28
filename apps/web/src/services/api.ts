@@ -66,6 +66,15 @@ export const api = {
     return res.json();
   },
 
+  async simulateEvent(caseId: string, eventType: string): Promise<any> {
+    const res = await fetch(`${API_BASE}/cases/${caseId}/simulate-event`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ event_type: eventType }),
+    });
+    return res.json();
+  },
+
   async resolveDbtChain(caseId: string) {
     const res = await fetch(`${API_BASE}/cases/${caseId}/resolve-dbt-chain`, {
       method: 'POST',

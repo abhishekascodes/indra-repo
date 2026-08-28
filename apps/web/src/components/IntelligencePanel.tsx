@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import {
   Brain, AlertTriangle, CheckCircle,
-  FileText, Send, Lock, Check, Sparkles, X
+  FileText, Send, Lock, Check, Sparkles, X, GitFork
 } from 'lucide-react';
 import type { Case, CandidateCause, ActionDraft } from '../types';
 
@@ -10,6 +10,8 @@ interface IntelligencePanelProps {
   onGrantConsent: (actionId: string, consent: boolean) => void;
   onSubmitAction: (actionId: string) => void;
   onResolveChain: () => void;
+  onHighlightCausalChain: (nodeIds: string[]) => void;
+  highlightedChainNodeIds?: string[];
   isLoading: boolean;
 }
 
@@ -18,9 +20,11 @@ export const IntelligencePanel: React.FC<IntelligencePanelProps> = ({
   onGrantConsent,
   onSubmitAction,
   onResolveChain,
+  onHighlightCausalChain,
+  highlightedChainNodeIds = [],
   isLoading,
 }) => {
-  const [activeTab, setActiveTab] = useState<'root_cause' | 'contradictions' | 'actions' | 'facts'>('actions');
+  const [activeTab, setActiveTab] = useState<'root_cause' | 'contradictions' | 'actions' | 'facts' | 'pipeline'>('actions');
   const [viewingLetterAction, setViewingLetterAction] = useState<ActionDraft | null>(null);
 
   const topCause: CandidateCause | undefined = currentCase.candidate_causes?.[0];
@@ -30,7 +34,7 @@ export const IntelligencePanel: React.FC<IntelligencePanelProps> = ({
   return (
     <div className="h-full flex flex-col bg-[#F8FAFC] border-l border-slate-300 select-none font-mono">
       {/* Bloomberg Header */}
-      <div className="px-4 py-3 bg-white border-b border-slate-300 flex items-center justify-between shadow-xs">
+      <div className="px-4 py-2.5 bg-white border-b border-slate-300 flex items-center justify-between shadow-xs">
         <div className="flex items-center space-x-2">
           <Brain className="w-4 h-4 text-slate-800" />
           <h2 className="text-xs font-bold uppercase tracking-wider text-slate-900">INTELLIGENCE TERMINAL</h2>
@@ -49,7 +53,7 @@ export const IntelligencePanel: React.FC<IntelligencePanelProps> = ({
       <div className="p-3 bg-slate-50 border-b border-slate-200">
         <div className="text-[9px] uppercase text-slate-500 font-bold tracking-wider mb-1 flex items-center space-x-1">
           <Sparkles className="w-3 h-3 text-amber-600" />
-          <span>CASE OBJECTIVE & SYNTHESIS</span>
+          <span>CASE OBJECTIVE & RECONSTRUCTION</span>
         </div>
         <p className="text-xs text-slate-900 font-semibold leading-relaxed font-sans">
           {currentCase.objective}
@@ -103,6 +107,16 @@ export const IntelligencePanel: React.FC<IntelligencePanelProps> = ({
           }`}
         >
           FACTS ({currentCase.facts_summary?.length || 0})
+        </button>
+        <button
+          onClick={() => setActiveTab('pipeline')}
+          className={`flex-1 py-2 font-bold transition-all border-b-2 ${
+            activeTab === 'pipeline'
+              ? 'border-indigo-600 text-indigo-700 bg-indigo-50/50'
+              : 'border-transparent text-slate-500 hover:text-slate-900'
+          }`}
+        >
+          PIPELINE
         </button>
       </div>
 
@@ -241,6 +255,21 @@ export const IntelligencePanel: React.FC<IntelligencePanelProps> = ({
                   {topCause.hypothesis}
                 </p>
 
+                {/* Highlight Causal Chain in Graph Action */}
+                {topCause.causal_chain && topCause.causal_chain.length > 0 && (
+                  <button
+                    onClick={() => onHighlightCausalChain(topCause.causal_chain)}
+                    className="w-full py-1 bg-purple-700 hover:bg-purple-800 text-white rounded text-[10px] font-bold flex items-center justify-center space-x-1.5 transition-all shadow-xs active:scale-98"
+                  >
+                    <GitFork className="w-3 h-3" />
+                    <span>
+                      {highlightedChainNodeIds.length > 0
+                        ? 'CAUSAL CHAIN ILLUMINATED IN GRAPH'
+                        : 'ILLUMINATE CAUSAL CHAIN IN GRAPH'}
+                    </span>
+                  </button>
+                )}
+
                 {topCause.recommended_remedy && (
                   <div className="p-2 rounded bg-white border border-slate-200 text-[10px] text-slate-800 space-y-1">
                     <div className="font-bold text-slate-900 uppercase text-[9px]">RECOMMENDED REMEDY</div>
@@ -315,6 +344,34 @@ export const IntelligencePanel: React.FC<IntelligencePanelProps> = ({
                 <span>{fact}</span>
               </div>
             ))}
+          </div>
+        )}
+
+        {/* TAB 5: DISCOVERY PIPELINE */}
+        {activeTab === 'pipeline' && (
+          <div className="space-y-2 font-mono text-xs">
+            <div className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">
+              DISCOVERY RECONSTRUCTION SEQUENCE
+            </div>
+
+            <div className="space-y-1.5">
+              {[
+                { title: '1. Multimodal Evidence Vault', desc: `${currentCase.documents.length} evidence sources ingested with spatial bounding boxes.`, done: true },
+                { title: '2. Structured Facts Extracted', desc: `${currentCase.nodes.filter(n => n.epistemic_category === 'FACT').length} empirical facts validated with provenance.`, done: true },
+                { title: '3. Contradictions Flagged', desc: `${currentCase.contradictions.length} factual/transactional discrepancies detected.`, done: currentCase.contradictions.length > 0 },
+                { title: '4. Domain Rules Reconciled', desc: `Matched statutory guidelines against observed error codes.`, done: true },
+                { title: '5. Causal Root Cause Formulated', desc: topCause ? `Confidence: ${Math.round(topCause.confidence * 100)}%` : 'Pending', done: !!topCause },
+                { title: '6. Procedural Remediation Plan', desc: `${currentCase.actions.length} actionable administrative representations drafted.`, done: currentCase.actions.length > 0 }
+              ].map((step, idx) => (
+                <div key={idx} className="p-2 rounded bg-white border border-slate-200 flex items-start space-x-2">
+                  <Check className="w-3.5 h-3.5 text-emerald-600 flex-shrink-0 mt-0.5" />
+                  <div>
+                    <div className="font-bold text-slate-900 text-[11px]">{step.title}</div>
+                    <div className="text-[10px] text-slate-500 font-sans">{step.desc}</div>
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
         )}
       </div>

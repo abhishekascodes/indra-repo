@@ -11,18 +11,20 @@ export const App: React.FC = () => {
   const [currentCase, setCurrentCase] = useState<Case | null>(null);
   const [graphData, setGraphData] = useState<UIGraphData | null>(null);
   const [activeProvenance, setActiveProvenance] = useState<Provenance | null>(null);
+  const [highlightedChainNodeIds, setHighlightedChainNodeIds] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(false);
 
   // Initialize or load flagship case
   const initializeCase = async (domainId: string = 'dbt_failure') => {
     try {
       setIsLoading(true);
+      setHighlightedChainNodeIds([]);
       const title = domainId === 'dbt_failure'
-        ? 'Post-Matric Scholarship DBT Failure'
+        ? 'Cross-Domain DBT Failure & Bank Account Restriction'
         : 'EPFO Form 19 Claim Settlement Blockade';
       const citizen = domainId === 'dbt_failure' ? 'Aakash Verma' : 'Pooja Sharma';
       const objective = domainId === 'dbt_failure'
-        ? 'Resolve Rs. 48,000 scholarship payment failure across PFMS, NPCI, and Canara Bank.'
+        ? 'Reconcile Rs. 48,000 scholarship failure across PFMS Gateway, NPCI Mapper, Canara Bank Restriction, and Cyber Requisition.'
         : 'Resolve EPF final settlement claim rejection caused by Date of Exit conflict.';
 
       // 1. Create Case
@@ -115,9 +117,31 @@ export const App: React.FC = () => {
     }
   };
 
+  const handleSimulateEvent = async (eventType: string) => {
+    if (!currentCase) return;
+    try {
+      setIsLoading(true);
+      await api.simulateEvent(currentCase.id, eventType);
+      await refreshCase(currentCase.id);
+    } catch (err) {
+      console.error('Error simulating event:', err);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleToggleCausalChain = (nodeIds: string[]) => {
+    if (highlightedChainNodeIds.length > 0) {
+      setHighlightedChainNodeIds([]);
+    } else {
+      setHighlightedChainNodeIds(nodeIds);
+    }
+  };
+
   const handleReset = async () => {
     try {
       setIsLoading(true);
+      setHighlightedChainNodeIds([]);
       await api.resetMockState();
       if (currentCase) {
         await initializeCase(currentCase.domain_id);
@@ -131,11 +155,12 @@ export const App: React.FC = () => {
 
   return (
     <div className="h-screen w-screen flex flex-col bg-[#F1F5F9] text-slate-900 overflow-hidden font-sans">
-      {/* 1. Header Command Bar */}
+      {/* 1. Header Command Bar with Bloomberg Ticker and Demo Agency Controls */}
       <Header
         currentCase={currentCase}
         onAdvanceTime={handleAdvanceTime}
         onSelectDomain={initializeCase}
+        onSimulateEvent={handleSimulateEvent}
         onReset={handleReset}
         isLoading={isLoading}
       />
@@ -156,6 +181,7 @@ export const App: React.FC = () => {
           <CaseGraphView
             graphData={graphData}
             onSelectProvenance={setActiveProvenance}
+            highlightedChainNodeIds={highlightedChainNodeIds}
           />
         </div>
 
@@ -167,6 +193,8 @@ export const App: React.FC = () => {
               onGrantConsent={handleGrantConsent}
               onSubmitAction={handleSubmitAction}
               onResolveChain={handleResolveChain}
+              onHighlightCausalChain={handleToggleCausalChain}
+              highlightedChainNodeIds={highlightedChainNodeIds}
               isLoading={isLoading}
             />
           )}

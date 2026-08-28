@@ -7,7 +7,7 @@ State Machine transitions, Action execution, and Mock Government interaction.
 import os
 import uuid
 from typing import Dict, List, Any, Optional
-from datetime import datetime
+from datetime import datetime, timezone
 from fastapi import FastAPI, HTTPException, UploadFile, File, Form, Depends
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
@@ -16,7 +16,7 @@ from pydantic import BaseModel
 
 from packages.schemas.models import (
     Case, AgentState, ActionStatus, ContradictionSeverity,
-    EpistemicCategory, NodeType, EdgeType, Node, Edge, ActionDraft, TimelineEvent, CaseDocument
+    EpistemicCategory, NodeType, EdgeType, Node, Edge, ActionDraft, TimelineEvent, CaseDocument, Provenance
 )
 from packages.case_engine.graph_manager import CaseGraphManager
 from packages.case_engine.state_machine import CaseStateMachine
@@ -49,7 +49,7 @@ app.add_middleware(
 # Mount Mock Government Endpoints
 app.include_router(mock_gov_router, prefix="/api")
 
-# In-Memory Case Store (can be persisted to SQLite)
+# In-Memory Case Store
 CASES_DB: Dict[str, Case] = {}
 
 
@@ -69,13 +69,17 @@ class ActionConsentRequest(BaseModel):
     consent: bool = True
 
 
+class SimulateEventRequest(BaseModel):
+    event_type: str  # "SLA_TIMEOUT", "GOV_DELAY", "NEW_EVIDENCE", "CONTRADICTORY_RESPONSE"
+
+
 # API Endpoints
 @app.get("/api/health")
 async def health_check():
     return {
         "status": "HEALTHY",
         "system": "INDRA Citizen Case Intelligence Engine",
-        "timestamp": datetime.utcnow().isoformat(),
+        "timestamp": datetime.now(timezone.utc).isoformat(),
         "active_cases": len(CASES_DB)
     }
 
@@ -107,7 +111,7 @@ async def create_case(req: CreateCaseRequest):
         overall_confidence=1.0,
         timeline=[
             TimelineEvent(
-                timestamp=datetime.utcnow().isoformat(),
+                timestamp=datetime.now(timezone.utc).isoformat(),
                 day_offset=0,
                 title="Case Initialized",
                 description=f"INDRA Case opened for citizen {req.citizen_name} under domain '{plugin.title}'.",
@@ -239,10 +243,10 @@ async def grant_action_consent(case_id: str, action_id: str, req: ActionConsentR
 
     # Timeline event
     case.timeline.append(TimelineEvent(
-        timestamp=datetime.utcnow().isoformat(),
+        timestamp=datetime.now(timezone.utc).isoformat(),
         day_offset=case.simulated_day,
         title=f"Citizen Consent Granted: {action.action_type}",
-        description=f"Citizen approved action: '{action.purpose}'. Ready for administrative submission.",
+        description=f"Citizen authorized: '{action.purpose}'. Ready for administrative submission.",
         event_type="CITIZEN_CONSENT",
         epistemic_category=EpistemicCategory.FACT
     ))
@@ -283,7 +287,7 @@ async def submit_action_to_mock_system(case_id: str, action_id: str):
         }
         receipt = {
             "receipt_id": f"NPCI-ACK-{uuid.uuid4().hex[:8].upper()}",
-            "submission_timestamp": datetime.utcnow().isoformat(),
+            "submission_timestamp": datetime.now(timezone.utc).isoformat(),
             "institution": "Canara Bank Lead Branch & NPCI APBS Gateway",
             "status": "RECEIVED_AND_MAPPED",
             "mapped_bank": "State Bank of India",
@@ -295,7 +299,7 @@ async def submit_action_to_mock_system(case_id: str, action_id: str):
     elif action.action_type == "EPFO_JOINT_DECLARATION_SUBMISSION":
         receipt = {
             "receipt_id": f"EPFO-ACK-{uuid.uuid4().hex[:8].upper()}",
-            "submission_timestamp": datetime.utcnow().isoformat(),
+            "submission_timestamp": datetime.now(timezone.utc).isoformat(),
             "institution": "EPFO Regional Office Delhi South",
             "status": "RECEIVED_UNDER_REVIEW",
             "sla_days": 15
@@ -325,6 +329,70 @@ async def advance_case_time(case_id: str, req: TimeAdvanceRequest):
 
     case = TemporalEngine.advance_time(case, req.days)
     return case
+
+
+@app.post("/api/cases/{case_id}/simulate-event")
+async def simulate_case_event(case_id: str, req: SimulateEventRequest):
+    """
+    Simulates adaptive real-world events on actual case state:
+    - SLA_TIMEOUT: Advances simulated time past SLA, triggers automatic escalation.
+    - GOV_DELAY: Adds 7 days and institutional delay notice.
+    - NEW_EVIDENCE: Dynamically adds an updated bank statement.
+    """
+    case = CASES_DB.get(case_id)
+    if not case:
+        raise HTTPException(status_code=404, detail="Case not found.")
+
+    if req.event_type == "SLA_TIMEOUT":
+        case = TemporalEngine.advance_time(case, 16)
+        return {"status": "SUCCESS", "message": "Statutory SLA expired. Automatic CPGRAMS escalation triggered.", "case": case}
+
+    elif req.event_type == "GOV_DELAY":
+        case = TemporalEngine.advance_time(case, 7)
+        case.timeline.append(TimelineEvent(
+            timestamp=datetime.now(timezone.utc).isoformat(),
+            day_offset=case.simulated_day,
+            title="Institutional Delay Notice",
+            description="Destination Bank nodal branch requested 7 additional working days for Aadhaar mapper synchronization.",
+            event_type="SYSTEM_OBSERVATION",
+            epistemic_category=EpistemicCategory.SYSTEM_OBSERVATION
+        ))
+        return {"status": "SUCCESS", "message": "Simulated institutional delay.", "case": case}
+
+    elif req.event_type == "NEW_EVIDENCE":
+        # Add supplemental verified bank acknowledgment
+        doc_id = f"doc_ack_{uuid.uuid4().hex[:6]}"
+        ack_doc = CaseDocument(
+            id=doc_id,
+            filename="06_bank_mandate_acknowledgment.pdf",
+            file_type="pdf",
+            uploaded_at=datetime.now(timezone.utc).isoformat(),
+            page_count=1,
+            extractions_count=1
+        )
+        case.documents.append(ack_doc)
+        graph_mgr = CaseGraphManager(case)
+        ack_node = Node(
+            id=f"node_{doc_id}",
+            type=NodeType.EVIDENCE,
+            label="Bank Mandate Receipt Acknowledgment",
+            attributes={"status": "SEEDED_VERIFIED"},
+            epistemic_category=EpistemicCategory.FACT,
+            confidence=0.99,
+            provenance=Provenance(
+                document_id=doc_id,
+                document_name="06_bank_mandate_acknowledgment.pdf",
+                page_number=1,
+                extracted_text="Bank branch countersigned NPCI mandate remapping acknowledgment slip.",
+                confidence=0.99,
+                extraction_method="branch_counter_scan"
+            )
+        )
+        graph_mgr.add_node(ack_node)
+        graph_mgr.sync_to_case(case)
+        return {"status": "SUCCESS", "message": "Supplemental evidence ingested.", "case": case}
+
+    return {"status": "SUCCESS", "case": case}
 
 
 @app.post("/api/cases/{case_id}/resolve-dbt-chain")
@@ -393,7 +461,6 @@ async def get_case_graph(case_id: str):
 @app.get("/api/evidence/preview/{doc_id}")
 async def get_evidence_preview(doc_id: str):
     """Retrieves document file and bounding boxes for visual evidence viewer."""
-    # Find document across all cases
     for case in CASES_DB.values():
         for doc in case.documents:
             if doc.id == doc_id:

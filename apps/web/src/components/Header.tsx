@@ -1,11 +1,15 @@
-import React from 'react';
-import { Shield, Clock, Play, RotateCcw, Cpu, ChevronRight } from 'lucide-react';
+import React, { useState } from 'react';
+import {
+  Shield, Clock, Play, RotateCcw, Cpu, ChevronRight, Sliders,
+  FilePlus, Hourglass, ChevronDown
+} from 'lucide-react';
 import type { Case, AgentState } from '../types';
 
 interface HeaderProps {
   currentCase: Case | null;
   onAdvanceTime: (days: number) => void;
   onSelectDomain: (domainId: string) => void;
+  onSimulateEvent: (eventType: string) => void;
   onReset: () => void;
   isLoading: boolean;
 }
@@ -28,9 +32,12 @@ export const Header: React.FC<HeaderProps> = ({
   currentCase,
   onAdvanceTime,
   onSelectDomain,
+  onSimulateEvent,
   onReset,
   isLoading,
 }) => {
+  const [showDemoMenu, setShowDemoMenu] = useState(false);
+
   const stateStyle = currentCase
     ? STATE_COLORS[currentCase.current_state] || { bg: 'bg-slate-100', text: 'text-slate-700', border: 'border-slate-300', dot: 'bg-slate-500' }
     : { bg: 'bg-slate-100', text: 'text-slate-700', border: 'border-slate-300', dot: 'bg-slate-500' };
@@ -66,7 +73,7 @@ export const Header: React.FC<HeaderProps> = ({
                 : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200'
             }`}
           >
-            [1] DBT/PFMS Gateway
+            [1] Cross-Domain DBT/PFMS
           </button>
           <button
             onClick={() => onSelectDomain('epfo_claim')}
@@ -125,7 +132,7 @@ export const Header: React.FC<HeaderProps> = ({
       )}
 
       {/* Action Controls & Fast Forward */}
-      <div className="flex items-center space-x-2 font-mono">
+      <div className="flex items-center space-x-2 font-mono relative">
         {currentCase && (
           <>
             <button
@@ -146,6 +153,56 @@ export const Header: React.FC<HeaderProps> = ({
               <Play className="w-3 h-3 text-white fill-white" />
               <span>+15D SLA</span>
             </button>
+
+            {/* Demo Adaptive Controls Dropdown */}
+            <div className="relative">
+              <button
+                onClick={() => setShowDemoMenu(!showDemoMenu)}
+                className="px-2.5 py-1 bg-slate-900 text-white rounded text-xs font-bold flex items-center space-x-1 transition-all shadow-xs hover:bg-slate-800"
+              >
+                <Sliders className="w-3 h-3 text-amber-400" />
+                <span>DEMO</span>
+                <ChevronDown className="w-3 h-3" />
+              </button>
+
+              {showDemoMenu && (
+                <div className="absolute right-0 mt-1 w-64 bg-white border border-slate-300 rounded-lg shadow-xl p-2 z-50 space-y-1 font-mono text-xs">
+                  <div className="text-[9px] uppercase font-bold text-slate-400 px-2 py-1 border-b border-slate-100">
+                    ADAPTIVE SCENARIOS
+                  </div>
+                  <button
+                    onClick={() => {
+                      onSimulateEvent('SLA_TIMEOUT');
+                      setShowDemoMenu(false);
+                    }}
+                    className="w-full text-left p-1.5 rounded hover:bg-red-50 text-red-700 font-bold flex items-center space-x-2 transition-colors"
+                  >
+                    <Hourglass className="w-3.5 h-3.5 text-red-600" />
+                    <span>Trigger 15-Day SLA Timeout</span>
+                  </button>
+                  <button
+                    onClick={() => {
+                      onSimulateEvent('GOV_DELAY');
+                      setShowDemoMenu(false);
+                    }}
+                    className="w-full text-left p-1.5 rounded hover:bg-amber-50 text-amber-800 font-semibold flex items-center space-x-2 transition-colors"
+                  >
+                    <Clock className="w-3.5 h-3.5 text-amber-600" />
+                    <span>Simulate Institutional Delay</span>
+                  </button>
+                  <button
+                    onClick={() => {
+                      onSimulateEvent('NEW_EVIDENCE');
+                      setShowDemoMenu(false);
+                    }}
+                    className="w-full text-left p-1.5 rounded hover:bg-blue-50 text-blue-700 font-semibold flex items-center space-x-2 transition-colors"
+                  >
+                    <FilePlus className="w-3.5 h-3.5 text-blue-600" />
+                    <span>Ingest Supplemental Receipt</span>
+                  </button>
+                </div>
+              )}
+            </div>
           </>
         )}
 

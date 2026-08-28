@@ -128,7 +128,9 @@ export interface ActionDraft {
   action_type: string;
   target_institution: string;
   purpose: string;
-  supporting_evidence_ids: string[];
+  legal_basis?: string;
+  evidence_ids?: string[];
+  supporting_evidence_ids?: string[];
   rule_id?: string;
   generated_content: string;
   status: ActionStatus;

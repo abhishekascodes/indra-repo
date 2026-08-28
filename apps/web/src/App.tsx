@@ -1,31 +1,39 @@
 import React, { useState, useEffect } from 'react';
 import { Header } from './components/Header';
+import { CaseStoryView } from './components/CaseStoryView';
 import { EvidenceVault } from './components/EvidenceVault';
 import { CaseGraphView } from './components/CaseGraphView';
-import { IntelligencePanel } from './components/IntelligencePanel';
 import { TimelineRail } from './components/TimelineRail';
 import { api } from './services/api';
 import type { Case, UIGraphData, Provenance } from './types';
+import { CheckCircle2, AlertTriangle, X } from 'lucide-react';
 
 export const App: React.FC = () => {
   const [currentCase, setCurrentCase] = useState<Case | null>(null);
   const [graphData, setGraphData] = useState<UIGraphData | null>(null);
   const [activeProvenance, setActiveProvenance] = useState<Provenance | null>(null);
   const [highlightedChainNodeIds, setHighlightedChainNodeIds] = useState<string[]>([]);
+  const [activeView, setActiveView] = useState<'story' | 'graph' | 'evidence' | 'timeline'>('story');
   const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [toastMessage, setToastMessage] = useState<{ text: string; type: 'success' | 'info' | 'warning' } | null>(null);
 
-  // Initialize or load flagship case
+  const showToast = (text: string, type: 'success' | 'info' | 'warning' = 'success') => {
+    setToastMessage({ text, type });
+    setTimeout(() => setToastMessage(null), 4000);
+  };
+
+  // Initialize or load case
   const initializeCase = async (domainId: string = 'dbt_failure') => {
     try {
       setIsLoading(true);
       setHighlightedChainNodeIds([]);
       const title = domainId === 'dbt_failure'
-        ? 'Cross-Domain DBT Failure & Bank Account Restriction'
+        ? 'Cross-Domain DBT Scholarship Failure'
         : 'EPFO Form 19 Claim Settlement Blockade';
       const citizen = domainId === 'dbt_failure' ? 'Aakash Verma' : 'Pooja Sharma';
       const objective = domainId === 'dbt_failure'
-        ? 'Reconcile Rs. 48,000 scholarship failure across PFMS Gateway, NPCI Mapper, Canara Bank Restriction, and Cyber Requisition.'
-        : 'Resolve EPF final settlement claim rejection caused by Date of Exit conflict.';
+        ? 'Reconcile ₹48,000 scholarship payment blockage across PFMS Gateway, NPCI Mapper, Canara Bank Restriction, and Cyber Requisition.'
+        : 'Resolve EPF final settlement claim rejection caused by Date of Exit conflict between member master and relieving letter.';
 
       // 1. Create Case
       const newCase = await api.createCase({
@@ -42,8 +50,11 @@ export const App: React.FC = () => {
       // 3. Fetch initial graph
       const graph = await api.getGraph(newCase.id);
       setGraphData(graph);
+
+      showToast(`Loaded ${domainId === 'dbt_failure' ? 'DBT Scholarship' : 'EPFO Claim'} Case for ${citizen}`);
     } catch (err) {
       console.error('Error initializing case:', err);
+      showToast('Error initializing case', 'warning');
     } finally {
       setIsLoading(false);
     }
@@ -74,6 +85,12 @@ export const App: React.FC = () => {
       setCurrentCase(updated);
       const g = await api.getGraph(currentCase.id);
       setGraphData(g);
+
+      if (updated.current_state === 'ESCALATION_REQUIRED') {
+        showToast(`Clock advanced +${days}d: 15-Day SLA Expired! Case auto-escalated to CPGRAMS`, 'warning');
+      } else {
+        showToast(`Simulated clock advanced by +${days} days (Now Day ${updated.simulated_day})`, 'info');
+      }
     } catch (err) {
       console.error('Error advancing time:', err);
     } finally {
@@ -86,6 +103,7 @@ export const App: React.FC = () => {
     try {
       await api.grantConsent(currentCase.id, actionId, consent);
       await refreshCase(currentCase.id);
+      showToast(consent ? 'Citizen consent granted! Ready for portal submission.' : 'Consent revoked.');
     } catch (err) {
       console.error('Error granting consent:', err);
     }
@@ -97,6 +115,7 @@ export const App: React.FC = () => {
       setIsLoading(true);
       await api.submitAction(currentCase.id, actionId);
       await refreshCase(currentCase.id);
+      showToast('Action submitted directly to Bank / NPCI portal. Case entered WAITING state.');
     } catch (err) {
       console.error('Error submitting action:', err);
     } finally {
@@ -108,10 +127,12 @@ export const App: React.FC = () => {
     if (!currentCase) return;
     try {
       setIsLoading(true);
-      await api.resolveDbtChain(currentCase.id);
+      const res = await api.resolveDbtChain(currentCase.id);
       await refreshCase(currentCase.id);
+      showToast(`Payment Disbursed! ₹48,000 credited successfully via UTR #${res.utr}`);
     } catch (err) {
       console.error('Error resolving chain:', err);
+      showToast('Prerequisites not yet satisfied in bank portal', 'warning');
     } finally {
       setIsLoading(false);
     }
@@ -121,8 +142,9 @@ export const App: React.FC = () => {
     if (!currentCase) return;
     try {
       setIsLoading(true);
-      await api.simulateEvent(currentCase.id, eventType);
+      const res = await api.simulateEvent(currentCase.id, eventType);
       await refreshCase(currentCase.id);
+      showToast(res.message || 'Simulation event executed');
     } catch (err) {
       console.error('Error simulating event:', err);
     } finally {
@@ -131,10 +153,16 @@ export const App: React.FC = () => {
   };
 
   const handleToggleCausalChain = (nodeIds: string[]) => {
-    if (highlightedChainNodeIds.length > 0) {
-      setHighlightedChainNodeIds([]);
-    } else {
-      setHighlightedChainNodeIds(nodeIds);
+    setHighlightedChainNodeIds(nodeIds);
+    setActiveView('graph');
+    showToast('Causal path highlighted in graph topology');
+  };
+
+  const handleSelectProvenance = (prov: Provenance | null) => {
+    setActiveProvenance(prov);
+    if (prov) {
+      setActiveView('evidence');
+      showToast(`Focused Page ${prov.page_number} in Evidence Vault`);
     }
   };
 
@@ -146,6 +174,7 @@ export const App: React.FC = () => {
       if (currentCase) {
         await initializeCase(currentCase.domain_id);
       }
+      showToast('Simulation environment reset to Day 0');
     } catch (err) {
       console.error('Error resetting mock state:', err);
     } finally {
@@ -154,10 +183,12 @@ export const App: React.FC = () => {
   };
 
   return (
-    <div className="h-screen w-screen flex flex-col bg-[#F1F5F9] text-slate-900 overflow-hidden font-sans">
-      {/* 1. Header Command Bar with Bloomberg Ticker and Demo Agency Controls */}
+    <div className="h-screen w-screen flex flex-col bg-slate-100 text-slate-900 overflow-hidden font-sans">
+      {/* 1. Header Command Bar & Workspace View Switcher */}
       <Header
         currentCase={currentCase}
+        activeView={activeView}
+        onSelectView={setActiveView}
         onAdvanceTime={handleAdvanceTime}
         onSelectDomain={initializeCase}
         onSimulateEvent={handleSimulateEvent}
@@ -165,48 +196,82 @@ export const App: React.FC = () => {
         isLoading={isLoading}
       />
 
-      {/* 2. Main 3-Column Workspace */}
-      <div className="flex-1 flex overflow-hidden">
-        {/* Left: Evidence Vault (25%) */}
-        <div className="w-1/4 h-full">
+      {/* 2. Main Full-Width Active View Canvas */}
+      <main className="flex-1 overflow-hidden relative">
+        {/* VIEW 1: CASE STORY & RESOLUTION HUB (Default) */}
+        {activeView === 'story' && currentCase && (
+          <CaseStoryView
+            currentCase={currentCase}
+            onGrantConsent={handleGrantConsent}
+            onSubmitAction={handleSubmitAction}
+            onResolveChain={handleResolveChain}
+            onHighlightCausalChain={handleToggleCausalChain}
+            onViewGraph={() => setActiveView('graph')}
+            isLoading={isLoading}
+          />
+        )}
+
+        {/* VIEW 2: CASE GRAPH TOPOLOGY */}
+        {activeView === 'graph' && (
+          <CaseGraphView
+            graphData={graphData}
+            onSelectProvenance={handleSelectProvenance}
+            highlightedChainNodeIds={highlightedChainNodeIds}
+          />
+        )}
+
+        {/* VIEW 3: EVIDENCE VAULT & PROVENANCE */}
+        {activeView === 'evidence' && (
           <EvidenceVault
             documents={currentCase?.documents || []}
             activeProvenance={activeProvenance}
             onSelectProvenance={setActiveProvenance}
           />
-        </div>
+        )}
 
-        {/* Center: Case Graph Topology (45%) */}
-        <div className="w-[45%] h-full">
-          <CaseGraphView
-            graphData={graphData}
-            onSelectProvenance={setActiveProvenance}
-            highlightedChainNodeIds={highlightedChainNodeIds}
-          />
-        </div>
+        {/* VIEW 4: CHRONOLOGY & TIMELINE */}
+        {activeView === 'timeline' && currentCase && (
+          <div className="h-full p-8 overflow-y-auto bg-slate-50 flex flex-col justify-center">
+            <div className="max-w-4xl mx-auto w-full bg-white rounded-2xl border border-slate-200 p-6 shadow-sm">
+              <h3 className="text-base font-extrabold text-slate-900 mb-1">
+                Case Chronology & SLA Timeline
+              </h3>
+              <p className="text-xs text-slate-500 mb-6">
+                Chronological sequence of all empirical extractions, citizen consents, portal submissions, and time-bound statutory escalations.
+              </p>
+              <TimelineRail
+                timeline={currentCase.timeline}
+                simulatedDay={currentCase.simulated_day}
+              />
+            </div>
+          </div>
+        )}
+      </main>
 
-        {/* Right: INDRA Intelligence & Action Center (30%) */}
-        <div className="w-[30%] h-full">
-          {currentCase && (
-            <IntelligencePanel
-              currentCase={currentCase}
-              onGrantConsent={handleGrantConsent}
-              onSubmitAction={handleSubmitAction}
-              onResolveChain={handleResolveChain}
-              onHighlightCausalChain={handleToggleCausalChain}
-              highlightedChainNodeIds={highlightedChainNodeIds}
-              isLoading={isLoading}
-            />
-          )}
+      {/* 3. Toast Notification Banner */}
+      {toastMessage && (
+        <div className="fixed bottom-6 right-6 z-50 animate-in fade-in slide-in-from-bottom-4 duration-200">
+          <div className={`px-4 py-3 rounded-2xl shadow-xl border flex items-center space-x-3 text-xs font-bold ${
+            toastMessage.type === 'warning'
+              ? 'bg-amber-500 text-white border-amber-600 shadow-amber-500/20'
+              : toastMessage.type === 'info'
+              ? 'bg-slate-900 text-white border-slate-800 shadow-slate-900/20'
+              : 'bg-emerald-600 text-white border-emerald-700 shadow-emerald-600/20'
+          }`}>
+            {toastMessage.type === 'warning' ? (
+              <AlertTriangle className="w-4 h-4 text-white flex-shrink-0" />
+            ) : (
+              <CheckCircle2 className="w-4 h-4 text-white flex-shrink-0" />
+            )}
+            <span>{toastMessage.text}</span>
+            <button
+              onClick={() => setToastMessage(null)}
+              className="p-1 hover:bg-white/20 rounded-full transition-colors ml-2"
+            >
+              <X className="w-3.5 h-3.5" />
+            </button>
+          </div>
         </div>
-      </div>
-
-      {/* 3. Bottom: Case Chronology Timeline Rail */}
-      {currentCase && (
-        <TimelineRail
-          timeline={currentCase.timeline}
-          simulatedDay={currentCase.simulated_day}
-        />
       )}
     </div>
   );

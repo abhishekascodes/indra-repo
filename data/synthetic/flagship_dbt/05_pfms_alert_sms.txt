@@ -1,0 +1,3 @@
+FROM: VM-PFMSGV
+DATE: 14-AUG-2026 14:32
+Dear Aakash Verma, your DBT payment of Rs 48000 for Post-Matric Scholarship failed due to destination bank rejection BNS-410 (Account Inactive/Lien). Kindly contact your bank or update NPCI mandate.

@@ -1,0 +1,63 @@
+{
+  "case_id": "CASE-EPFO-CLAIM",
+  "domain_id": "epfo_claim",
+  "citizen_name": "Pooja Sharma",
+  "evidence_files": [
+    {
+      "file": "01_epfo_claim_rejection.pdf",
+      "type": "pdf",
+      "title": "EPFO Form 19 Claim Rejection Slip",
+      "extractions": [
+        {
+          "field": "error_code",
+          "value": "EPFO-REJ-DATE-MISMATCH",
+          "category": "FACT",
+          "page": 1,
+          "bbox": [
+            0.22,
+            0.08,
+            0.24,
+            0.45
+          ],
+          "raw_text": "Rejection Code: EPFO-REJ-DATE-MISMATCH",
+          "confidence": 0.99
+        },
+        {
+          "field": "date_of_exit",
+          "value": "2023-03-31",
+          "category": "FACT",
+          "page": 1,
+          "bbox": [
+            0.24,
+            0.08,
+            0.27,
+            0.95
+          ],
+          "raw_text": "Date of Exit 31/03/2023 in Member Master",
+          "confidence": 0.99
+        }
+      ]
+    },
+    {
+      "file": "02_company_relieving_certificate.pdf",
+      "type": "pdf",
+      "title": "Company Relieving Certificate",
+      "extractions": [
+        {
+          "field": "date_of_exit",
+          "value": "2023-04-15",
+          "category": "FACT",
+          "page": 1,
+          "bbox": [
+            0.2,
+            0.08,
+            0.22,
+            0.45
+          ],
+          "raw_text": "Date of Relieving / Exit: 15/04/2023",
+          "confidence": 0.99
+        }
+      ]
+    }
+  ]
+}

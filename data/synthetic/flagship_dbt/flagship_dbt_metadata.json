@@ -1,0 +1,191 @@
+{
+  "case_id": "CASE-FLAGSHIP-DBT",
+  "domain_id": "dbt_failure",
+  "citizen_name": "Aakash Verma",
+  "evidence_files": [
+    {
+      "file": "01_scholarship_sanction_order.pdf",
+      "type": "pdf",
+      "title": "Ministry Scholarship Sanction Order",
+      "extractions": [
+        {
+          "field": "sanction_status",
+          "value": "APPROVED / SANCTIONED",
+          "category": "FACT",
+          "page": 1,
+          "bbox": [
+            0.21,
+            0.08,
+            0.23,
+            0.45
+          ],
+          "raw_text": "Sanction Status: APPROVED / SANCTIONED",
+          "confidence": 0.99
+        },
+        {
+          "field": "sanctioned_amount",
+          "value": 48000.0,
+          "category": "FACT",
+          "page": 1,
+          "bbox": [
+            0.17,
+            0.08,
+            0.19,
+            0.45
+          ],
+          "raw_text": "Sanctioned Amount: Rs. 48,000.00",
+          "confidence": 0.99
+        },
+        {
+          "field": "dob",
+          "value": "2001-05-14",
+          "category": "FACT",
+          "page": 1,
+          "bbox": [
+            0.12,
+            0.58,
+            0.14,
+            0.9
+          ],
+          "raw_text": "Date of Birth: 14/05/2001",
+          "confidence": 0.99
+        }
+      ]
+    },
+    {
+      "file": "02_pfms_disbursal_rejection_slip.pdf",
+      "type": "pdf",
+      "title": "PFMS Disbursal Exception Report",
+      "extractions": [
+        {
+          "field": "error_code",
+          "value": "BNS-410",
+          "category": "FACT",
+          "page": 1,
+          "bbox": [
+            0.23,
+            0.08,
+            0.25,
+            0.35
+          ],
+          "raw_text": "Error Code: BNS-410",
+          "confidence": 0.99
+        },
+        {
+          "field": "rejection_reason",
+          "value": "Beneficiary Account Inactive / Debit Freeze / Lien Restriction at Destination Bank",
+          "category": "FACT",
+          "page": 1,
+          "bbox": [
+            0.26,
+            0.08,
+            0.29,
+            0.95
+          ],
+          "raw_text": "Reason Description: Beneficiary Account Inactive / Debit Freeze / Lien Restriction at Destination Bank",
+          "confidence": 0.99
+        },
+        {
+          "field": "disbursal_status",
+          "value": "REJECTED / DISBURSAL FAILED",
+          "category": "FACT",
+          "page": 1,
+          "bbox": [
+            0.2,
+            0.08,
+            0.22,
+            0.55
+          ],
+          "raw_text": "Settlement Status: REJECTED / DISBURSAL FAILED",
+          "confidence": 0.99
+        }
+      ]
+    },
+    {
+      "file": "03_canara_bank_statement.pdf",
+      "type": "pdf",
+      "title": "Canara Bank Restricted Account Statement",
+      "extractions": [
+        {
+          "field": "freeze_type",
+          "value": "FULL_ACCOUNT_FREEZE",
+          "category": "FACT",
+          "page": 1,
+          "bbox": [
+            0.14,
+            0.08,
+            0.16,
+            0.7
+          ],
+          "raw_text": "Debit Status: RESTRICTED / ADMINISTRATIVE LIEN MARKED",
+          "confidence": 0.98
+        },
+        {
+          "field": "npci_mapper_status",
+          "value": "INACTIVE",
+          "category": "FACT",
+          "page": 1,
+          "bbox": [
+            0.16,
+            0.08,
+            0.18,
+            0.7
+          ],
+          "raw_text": "NPCI Mapper Status: INACTIVE (APBS Mandate Suspended)",
+          "confidence": 0.98
+        }
+      ]
+    },
+    {
+      "file": "04_sbi_active_bank_statement.pdf",
+      "type": "pdf",
+      "title": "State Bank of India Active Account Confirmation",
+      "extractions": [
+        {
+          "field": "sbi_account_status",
+          "value": "ACTIVE",
+          "category": "FACT",
+          "page": 1,
+          "bbox": [
+            0.1,
+            0.08,
+            0.12,
+            0.6
+          ],
+          "raw_text": "Account Status: ACTIVE / FULL KYC COMPLIANT",
+          "confidence": 0.99
+        },
+        {
+          "field": "sbi_npci_ready",
+          "value": "ELIGIBLE",
+          "category": "FACT",
+          "page": 1,
+          "bbox": [
+            0.12,
+            0.08,
+            0.14,
+            0.85
+          ],
+          "raw_text": "Aadhaar Seeding Status: SEEDED / READY FOR NPCI APBS MANDATE",
+          "confidence": 0.99
+        }
+      ]
+    },
+    {
+      "file": "05_pfms_alert_sms.txt",
+      "type": "sms",
+      "title": "PFMS Gateway Alert SMS",
+      "extractions": [
+        {
+          "field": "sms_alert_code",
+          "value": "BNS-410",
+          "category": "FACT",
+          "page": 1,
+          "bbox": null,
+          "raw_text": "payment of Rs 48000 for Post-Matric Scholarship failed due to destination bank rejection BNS-410",
+          "confidence": 0.99
+        }
+      ]
+    }
+  ]
+}

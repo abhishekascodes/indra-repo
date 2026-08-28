@@ -1,0 +1,8 @@
+{
+  "name": "indra-root",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "build": "npm --prefix apps/web install && npm --prefix apps/web run build"
+  }
+}

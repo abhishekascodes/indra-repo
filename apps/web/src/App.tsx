@@ -235,7 +235,8 @@ export const App: React.FC = () => {
       <LoginScreen
         onLogin={(domainId) => {
           setIsAuthenticated(true);
-          initializeCase(domainId, true);
+          initializeCase(domainId, false);
+          setActiveTab('home');
         }}
       />
     );

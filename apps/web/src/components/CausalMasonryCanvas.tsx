@@ -93,9 +93,9 @@ export const CausalMasonryCanvas: React.FC<CausalMasonryCanvasProps> = ({
 
   // Categorize nodes for Causal Masonry placement on 8px grid
   const factNodes = nodes.filter(n => n.epistemic_category === 'FACT' && n.type !== 'DOCUMENT');
-  const observationNodes = nodes.filter(n => n.epistemic_category === 'SYSTEM_OBSERVATION');
+  const observationNodes = nodes.filter(n => n.epistemic_category === 'SYSTEM_OBSERVATION' || n.type === 'TRANSACTION');
   const ruleNodes = nodes.filter(n => n.epistemic_category === 'RULE' || n.type === 'RULE');
-  const inferenceNodes = nodes.filter(n => n.epistemic_category === 'INFERENCE' || n.type === 'DEPENDENCY');
+  const inferenceNodes = nodes.filter(n => n.epistemic_category === 'INFERENCE' || n.type === 'DEPENDENCY' || n.type === 'HYPOTHESIS');
   const actionNodes = nodes.filter(n => n.type === 'ACTION');
   const contradictionNodes = nodes.filter(n => n.type === 'CONTRADICTION' || n.epistemic_category === 'CONTRADICTION');
 
@@ -115,9 +115,9 @@ export const CausalMasonryCanvas: React.FC<CausalMasonryCanvasProps> = ({
         backgroundSize: '24px 24px'
       }}
     >
-      {/* 1. Top-Left Contextual Metadata & Semantic Level Badge */}
-      <div className="absolute top-6 left-6 z-20 pointer-events-none flex items-center space-x-3">
-        <div className="bg-white/90 backdrop-blur-md border border-slate-200 rounded-2xl px-4 py-2.5 shadow-xs">
+      {/* 1. Bottom-Left Contextual Semantic Level Indicator */}
+      <div className="absolute bottom-8 left-8 z-20 pointer-events-none flex items-center space-x-3">
+        <div className="bg-white/95 backdrop-blur-md border border-slate-200 rounded-2xl px-4 py-2.5 shadow-sm">
           <div className="flex items-center space-x-2">
             <span className="text-[10px] font-black uppercase tracking-wider text-slate-500">
               SEMANTIC ZOOM DEPTH
@@ -129,9 +129,9 @@ export const CausalMasonryCanvas: React.FC<CausalMasonryCanvasProps> = ({
           <div className="text-xs font-bold text-slate-800 mt-0.5">
             {currentLevel === 0 && 'Level 0: Macro Institutional Outcome'}
             {currentLevel === 1 && 'Level 1: Institutional Actors Topology'}
-            {currentLevel === 2 && 'Level 2: Causal Masonry (Primary Working View)'}
-            {currentLevel === 3 && 'Level 3: Grounded Reasoning Chain'}
-            {currentLevel === 4 && 'Level 4: Raw Source Evidence Vault'}
+            {currentLevel === 2 && 'Level 2: Causal Masonry Blueprint (8px Grid)'}
+            {currentLevel === 3 && 'Level 3: Reasoning Chain & Rules Applied'}
+            {currentLevel === 4 && 'Level 4: Raw Source Document Sheet'}
             {currentLevel === 5 && 'Level 5: Atomic OCR Bounding Box'}
           </div>
         </div>

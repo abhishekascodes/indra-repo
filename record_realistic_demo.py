@@ -1,92 +1,81 @@
 """
-High-Definition Human-Paced Video Recorder with Realistic Animated Cursor
-Records a smooth ~55-second natural demonstration of INDRA in action and converts to MP4.
+Playwright Realistic Human-Paced Demo Video Recorder for INDRA Causal Masonry Workspace.
+Produces a pristine 1080p MP4 recording demonstrating the complete forensic journey.
 """
 
-import os
 import time
-import shutil
+import os
 import subprocess
-from playwright.sync_api import sync_playwright, Page, Locator
+from playwright.sync_api import sync_playwright
 
-ARTIFACT_DIR = r"C:\Users\AbhishekPC\Desktop\the FIRST WIN"
-VIDEO_TEMP_DIR = os.path.join(ARTIFACT_DIR, "video_temp_realistic")
+OUTPUT_DIR = os.path.dirname(os.path.abspath(__file__))
+VIDEO_TEMP_DIR = os.path.join(OUTPUT_DIR, "video_temp_causal")
+FINAL_MP4_PATH = os.path.join(OUTPUT_DIR, "indra_demo_recording.mp4")
 
-
-def inject_custom_mouse_cursor(page: Page):
-    """Injects a visible, smooth mouse cursor into the DOM."""
-    js_code = """
-    (() => {
-        if (document.getElementById('playwright-mouse-pointer')) return;
-        const box = document.createElement('div');
-        box.id = 'playwright-mouse-pointer';
-        box.style.position = 'fixed';
-        box.style.top = '0';
-        box.style.left = '0';
-        box.style.width = '20px';
-        box.style.height = '20px';
-        box.style.pointerEvents = 'none';
-        box.style.zIndex = '999999';
-        box.style.transition = 'transform 0.05s linear';
-        box.innerHTML = `
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style="filter: drop-shadow(0 2px 4px rgba(0,0,0,0.35));">
-                <path d="M5.5 3.21V20.8c0 .45.54.67.85.35l4.86-4.86a.5.5 0 0 1 .35-.15h6.87c.45 0 .67-.54.35-.85L5.85 2.36a.5.5 0 0 0-.35.85z" fill="#0F172A" stroke="#FFFFFF" stroke-width="1.5"/>
-            </svg>
-            <div id="click-ripple" style="position: absolute; top: 0; left: 0; width: 24px; height: 24px; border-radius: 50%; background: rgba(99, 102, 241, 0.4); transform: scale(0); opacity: 0; transition: transform 0.3s ease-out, opacity 0.3s ease-out;"></div>
-        `;
-        document.body.appendChild(box);
-
-        window.movePointer = (x, y) => {
-            box.style.transform = `translate(${x}px, ${y}px)`;
-        };
-
-        window.clickPointer = () => {
-            const ripple = document.getElementById('click-ripple');
-            if (ripple) {
-                ripple.style.transform = 'scale(2.2)';
-                ripple.style.opacity = '1';
-                setTimeout(() => {
-                    ripple.style.transform = 'scale(0)';
-                    ripple.style.opacity = '0';
-                }, 250);
-            }
-        };
-    })();
-    """
-    page.evaluate(js_code)
+os.makedirs(VIDEO_TEMP_DIR, exist_ok=True)
 
 
-def smooth_move_to_locator(page: Page, locator: Locator, steps: int = 20, pause: float = 0.3):
-    """Smoothly moves the visible cursor to the center of a locator and hovers."""
-    try:
-        box = locator.bounding_box()
-        if not box:
-            return
-        target_x = box["x"] + box["width"] / 2
-        target_y = box["y"] + box["height"] / 2
+def inject_custom_mouse_cursor(page):
+    page.evaluate("""
+        () => {
+            if (document.getElementById('playwright-mouse-pointer')) return;
+            const pointer = document.createElement('div');
+            pointer.id = 'playwright-mouse-pointer';
+            pointer.style.width = '20px';
+            pointer.style.height = '20px';
+            pointer.style.borderRadius = '50%';
+            pointer.style.backgroundColor = 'rgba(37, 99, 235, 0.7)';
+            pointer.style.border = '2px solid #ffffff';
+            pointer.style.boxShadow = '0 0 10px rgba(37, 99, 235, 0.8)';
+            pointer.style.position = 'fixed';
+            pointer.style.top = '0px';
+            pointer.style.left = '0px';
+            pointer.style.pointerEvents = 'none';
+            pointer.style.zIndex = '9999999';
+            pointer.style.transition = 'transform 0.08s ease, width 0.15s ease, height 0.15s ease, background-color 0.15s ease';
+            pointer.style.transform = 'translate(-50%, -50%)';
+            document.body.appendChild(pointer);
 
-        # Animate in intermediate steps
-        page.evaluate(f"window.movePointer({target_x}, {target_y})")
-        page.mouse.move(target_x, target_y, steps=steps)
-        time.sleep(pause)
-    except Exception as e:
-        pass
+            window.addEventListener('mousemove', (e) => {
+                pointer.style.left = e.clientX + 'px';
+                pointer.style.top = e.clientY + 'px';
+            });
+            window.addEventListener('mousedown', () => {
+                pointer.style.transform = 'translate(-50%, -50%) scale(0.75)';
+                pointer.style.backgroundColor = 'rgba(220, 38, 38, 0.85)';
+            });
+            window.addEventListener('mouseup', () => {
+                pointer.style.transform = 'translate(-50%, -50%) scale(1.0)';
+                pointer.style.backgroundColor = 'rgba(37, 99, 235, 0.7)';
+            });
+        }
+    """)
 
 
-def human_click(page: Page, locator: Locator, post_pause: float = 1.0):
-    """Simulates a human moving cursor, clicking with ripple feedback, and pausing."""
-    smooth_move_to_locator(page, locator, steps=15, pause=0.25)
-    page.evaluate("window.clickPointer()")
-    locator.click()
+def smooth_move(page, target_x, target_y, steps=25):
+    page.mouse.move(target_x, target_y, steps=steps)
+    time.sleep(0.04)
+
+
+def human_click(page, locator, post_pause=1.2):
+    box = locator.bounding_box()
+    if box:
+        center_x = box["x"] + box["width"] / 2
+        center_y = box["y"] + box["height"] / 2
+        smooth_move(page, center_x, center_y, steps=20)
+        time.sleep(0.15)
+        page.mouse.down()
+        time.sleep(0.08)
+        page.mouse.up()
+    else:
+        locator.click()
     time.sleep(post_pause)
 
 
 def run_realistic_demo_recording():
     print("=" * 70)
-    print("   INDRA REALISTIC HUMAN-PACED DEMO VIDEO RECORDING (~55s)")
+    print("   INDRA CAUSAL MASONRY DEMO VIDEO RECORDING (~55s)")
     print("=" * 70)
-
-    os.makedirs(VIDEO_TEMP_DIR, exist_ok=True)
 
     with sync_playwright() as p:
         browser = p.chromium.launch(headless=True)
@@ -104,128 +93,90 @@ def run_realistic_demo_recording():
         time.sleep(1)
         inject_custom_mouse_cursor(page)
 
-        # If already logged in, log out first to show clean gateway
-        logout_btn = page.locator("button[title='Log Out (Return to Demo Login)']")
-        if logout_btn.count() > 0:
-            human_click(page, logout_btn, post_pause=1.0)
-            inject_custom_mouse_cursor(page)
-
-        # Select Aakash Verma & Enter
-        enter_btn = page.locator("button:has-text('ENTER WORKSPACE')")
-        print("[04s] Hovering and entering as Aakash Verma (Flagship)...")
-        human_click(page, enter_btn, post_pause=2.0)
+        # Enter Sandbox as Aakash Verma
+        enter_btn = page.locator("button").filter(has_text="Enter National Administrative Sandbox").first
+        print("[04s] Entering National Administrative Sandbox...")
+        human_click(page, enter_btn, post_pause=2.5)
         inject_custom_mouse_cursor(page)
 
-        # Step 2: Open Epistemic Ledger & Counterfactual (00:06 - 00:14)
-        epistemic_btn = page.locator("button:has-text('Inspect Proof')")
-        print("[06s] Inspecting Epistemic Ledger (Why INDRA believes this)...")
-        human_click(page, epistemic_btn, post_pause=2.0)
-        close_ledger = page.locator("button:has-text('Close Ledger')")
-        human_click(page, close_ledger, post_pause=1.0)
+        # Step 2: Causal Masonry Blueprint (00:08 - 00:18)
+        print("[08s] Exploring Causal Masonry Blueprint (8px Grid)...")
+        time.sleep(2.0)
 
-        whatif_btn = page.locator("button:has-text('What-If Simulation')")
-        print("[10s] Simulating Counterfactual What-If Dual World...")
-        human_click(page, whatif_btn, post_pause=2.0)
-        close_whatif = page.locator("button:has-text('Close Simulation')")
-        human_click(page, close_whatif, post_pause=1.0)
+        # Step 3: Trigger Forensic Provenance Drawer (00:18 - 00:28)
+        why_btn = page.locator("button").filter(has_text="WHY?").first
+        print("[18s] Clicking 'WHY?' on Root Cause Hypothesis...")
+        human_click(page, why_btn, post_pause=3.0)
 
-        # Step 3: Case Situation & Diagnostic Intelligence (00:14 - 00:20)
-        print("[14s] Reviewing Root Cause & Citizen Clarity...")
-        time.sleep(1.5)
+        # Close Provenance Drawer
+        close_drawer = page.locator("button").filter(has_text="Close Drawer").first
+        print("[28s] Closing Provenance Drawer...")
+        human_click(page, close_drawer, post_pause=1.5)
 
-        # Step 4: Inspect Generated Legal Petition Dossier (00:20 - 00:26)
-        inspect_dossier = page.locator("button:has-text('Inspect Prepared Legal Petition')").first
-        print("[20s] Inspecting Legal Petition Dossier...")
-        human_click(page, inspect_dossier, post_pause=2.0)
+        # Step 4: Epistemic Fact Ledger Audit Modal (00:30 - 00:36)
+        ledger_btn = page.locator("button").filter(has_text="Epistemic Ledger").first
+        print("[30s] Opening Epistemic Fact Ledger (Auditor View)...")
+        human_click(page, ledger_btn, post_pause=2.5)
 
-        close_dossier = page.locator("button:has-text('Close Petition')")
-        human_click(page, close_dossier, post_pause=1.0)
+        close_ledger = page.locator("button").filter(has_text="Close Ledger").first
+        human_click(page, close_ledger, post_pause=1.5)
 
-        # Step 5: Grant Citizen Consent (00:24 - 00:28)
-        consent_btn = page.locator("button:has-text('1. Authorize INDRA to Update Payment Link')").first
-        print("[24s] Granting Citizen Consent Authorization...")
-        human_click(page, consent_btn, post_pause=1.8)
+        # Step 5: Slide to Authorize & Enter Sentinel Waiting Mode (00:36 - 00:44)
+        slider = page.locator("[role='slider']").first
+        print("[36s] Sliding to Authorize Administrative Mandate (95% threshold)...")
+        box = slider.bounding_box()
+        if box:
+            start_x = box["x"] + 24
+            start_y = box["y"] + box["height"] / 2
+            end_x = box["x"] + box["width"] * 0.98
+            smooth_move(page, start_x, start_y, steps=15)
+            page.mouse.down()
+            smooth_move(page, end_x, start_y, steps=30)
+            page.mouse.up()
+            time.sleep(2.5)
 
-        # Step 6: Submit to Bank Portal (00:28 - 00:32)
-        submit_btn = page.locator("button:has-text('2. Submit Request to Bank Portal')").first
-        print("[28s] Submitting representation to Bank Portal...")
-        human_click(page, submit_btn, post_pause=2.0)
-
-        # Step 7: Fast Forward +15 Days (SLA Expiry & Auto-Escalation) (00:32 - 00:38)
-        ff_btn = page.locator("button:has-text('+15d SLA')")
-        print("[32s] Fast-forwarding +15 days to test statutory SLA...")
+        # Step 6: Sentinel Mode & Temporal Fast Forward (00:44 - 00:50)
+        print("[44s] Sentinel Radar active. Fast-forwarding +15 Days SLA...")
+        ff_btn = page.locator("button").filter(has_text="Fast Forward +15 Days").first
         human_click(page, ff_btn, post_pause=2.5)
 
-        # Step 8: PFMS Recovery Disbursal & Crediting Rs. 48,000 (00:38 - 00:44)
-        disburse_btn = page.locator("button:has-text('Verify & Credit ₹48,000 Scholarship')")
-        print("[38s] Finalizing PFMS Disbursal & Crediting Rs. 48,000...")
-        human_click(page, disburse_btn, post_pause=2.5)
+        # Simulate Bank Resolution & Benefit Crediting
+        res_btn = page.locator("button").filter(has_text="Simulate Bank Resolution").first
+        print("[48s] Simulating Bank Resolution & Crediting Rs. 48,000...")
+        human_click(page, res_btn, post_pause=3.0)
 
-        # View Resolution Certificate
-        cert_btn = page.locator("button:has-text('Audit Certificate')")
-        print("[42s] Viewing Official Resolution Certificate...")
-        human_click(page, cert_btn, post_pause=2.5)
-        done_cert = page.locator("button:has-text('Done')")
-        human_click(page, done_cert, post_pause=1.0)
+        # Step 7: Second Domain Switch (00:50 - 00:55)
+        epfo_tab = page.locator("button").filter(has_text="[2] EPFO PF Claim").first
+        print("[52s] Switching to Second Domain (EPFO - Pooja Sharma)...")
+        human_click(page, epfo_tab, post_pause=3.0)
 
-        # Step 9: Switch to Engineer View & React Flow Case Graph Canvas (00:44 - 00:50)
-        eng_btn = page.locator("button:has-text('Engineer View')")
-        print("[45s] Switching to Engineer View...")
-        human_click(page, eng_btn, post_pause=1.5)
-
-        graph_tab = page.locator("button:has-text('Causal Case Graph')")
-        print("[47s] Exploring React Flow Case Graph Canvas...")
-        human_click(page, graph_tab, post_pause=2.5)
-
-        # Step 10: Switch to Auditor View & Evidence Vault (00:50 - 00:54)
-        auditor_btn = page.locator("button:has-text('Auditor View')")
-        print("[50s] Switching to Auditor View...")
-        human_click(page, auditor_btn, post_pause=1.5)
-
-        evidence_tab = page.locator("button:has-text('Evidence Vault & Provenance')")
-        print("[52s] Exploring Evidence Vault & Document Sheets...")
-        human_click(page, evidence_tab, post_pause=1.5)
-
-        doc_buttons = page.locator(".scrollbar-none button")
-        if doc_buttons.count() >= 2:
-            human_click(page, doc_buttons.nth(1), post_pause=1.5)
-
-        # Step 11: Switch to Second Domain EPFO (00:54 - 00:57)
-        epfo_btn = page.locator("button:has-text('[2] EPFO')")
-        print("[54s] Switching to Second Domain (EPFO)...")
-        human_click(page, epfo_btn, post_pause=2.0)
-
-        logout_btn = page.locator("button[title='Log Out (Return to Demo Login)']")
-        print("[57s] Logging out to Sandbox Gateway...")
-        human_click(page, logout_btn, post_pause=1.5)
-
-        page.close()
+        # Finish recording
+        print("[55s] Completing high-resolution video capture...")
+        time.sleep(1)
         context.close()
+        video_path = page.video.path()
         browser.close()
 
-    # Move recorded video to root and convert to MP4
-    video_files = [os.path.join(VIDEO_TEMP_DIR, f) for f in os.listdir(VIDEO_TEMP_DIR) if f.endswith('.webm')]
-    if video_files:
-        latest_video = max(video_files, key=os.path.getctime)
-        webm_dest = os.path.join(ARTIFACT_DIR, "indra_demo_recording.webm")
-        mp4_dest = os.path.join(ARTIFACT_DIR, "indra_demo_recording.mp4")
-        shutil.copyfile(latest_video, webm_dest)
+    print(f"[OK] Raw WebM Video saved to: {video_path}")
 
-        print("[FFMPEG] Converting to 1080p/H.264 MP4 with optimal 25fps timing...")
-        subprocess.run([
-            "ffmpeg", "-y", "-i", webm_dest,
-            "-c:v", "libx264", "-preset", "fast", "-crf", "20",
-            "-pix_fmt", "yuv420p", mp4_dest
-        ], check=True)
-
-        # Also copy to public directory
-        public_mp4 = os.path.join(ARTIFACT_DIR, "apps", "web", "public", "indra_demo_recording.mp4")
-        shutil.copyfile(mp4_dest, public_mp4)
-
-        print(f"[SUCCESS] Natural ~58s MP4 video with visible cursor saved to: {mp4_dest}")
-        return mp4_dest
-
-    return None
+    # Convert WebM to standard MP4 via FFmpeg
+    if video_path and os.path.exists(video_path):
+        print("[INFO] Transcoding WebM to pristine 1080p MP4 via FFmpeg...")
+        cmd = [
+            "ffmpeg", "-y", "-i", video_path,
+            "-c:v", "libx264", "-preset", "slow", "-crf", "18",
+            "-pix_fmt", "yuv420p",
+            FINAL_MP4_PATH
+        ]
+        try:
+            res = subprocess.run(cmd, capture_output=True, text=True)
+            if res.returncode == 0:
+                print(f"[SUCCESS] Final MP4 generated: {FINAL_MP4_PATH}")
+                print(f"File Size: {os.path.getsize(FINAL_MP4_PATH) / 1024:.1f} KB")
+            else:
+                print(f"[WARN] FFmpeg transcoding stderr: {res.stderr}")
+        except Exception as e:
+            print(f"[ERROR] Could not run ffmpeg: {e}")
 
 
 if __name__ == "__main__":

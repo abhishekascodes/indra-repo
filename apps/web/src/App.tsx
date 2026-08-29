@@ -161,7 +161,7 @@ export function App() {
   }
 
   return (
-    <div className="min-h-screen w-full bg-white font-sans text-black flex flex-col justify-between select-none">
+    <div className="min-h-screen w-full bg-slate-50 font-sans text-slate-900 flex flex-col justify-between select-none">
       {/* 1. Global Light-Theme Top Navbar */}
       <IndraNavbar
         currentCase={currentCase || ({} as Case)}

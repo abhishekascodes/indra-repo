@@ -129,41 +129,43 @@ export const IndraCaseView: React.FC<IndraCaseViewProps> = ({
                 <p className="text-xs sm:text-sm text-slate-500 mt-1 leading-relaxed">
                   INDRA ingested all bank records and government notices, discovering the exact systemic root cause.
                 </p>
-              </div>
 
-              {/* The Two Diagnostic Comparison Pillars */}
-              <div className="grid sm:grid-cols-2 gap-4">
-                {/* Pillar 1: What Happened */}
-                <div className="p-5 bg-rose-50/60 border border-rose-200/80 rounded-2xl space-y-2.5">
-                  <div className="text-[11px] font-black uppercase tracking-wider text-rose-800 flex items-center space-x-1.5">
-                    <span className="w-2 h-2 rounded-full bg-rose-600" />
-                    <span>1. What Happened</span>
+                {/* The Two Diagnostic Comparison Pillars */}
+                <div className="grid sm:grid-cols-2 gap-4 mt-6">
+                  {/* Pillar 1: Factual Matrix (Institutional Amber) */}
+                  <div className="p-5 bg-white border border-amber-200/80 rounded-2xl space-y-2.5 relative overflow-hidden shadow-sm">
+                    <div className="absolute top-0 left-0 w-1 h-full bg-amber-500" />
+                    <div className="text-[11px] font-black uppercase tracking-wider text-amber-800 flex items-center space-x-1.5">
+                      <span className="w-2 h-2 rounded-full bg-amber-600" />
+                      <span>1. Factual Matrix</span>
+                    </div>
+                    <p className="text-xs sm:text-sm text-slate-800 font-medium leading-relaxed font-serif">
+                      {isDbt
+                        ? 'Canara Bank placed a temporary lien on account *4401 under Section 102 CrPC, which caused the central PFMS portal to fail with Error BNS-410.'
+                        : 'Your employer entered an exit date (15/11/2025) that contradicts your official relieving letter (31/10/2025), triggering Rule EPF-R09.'}
+                    </p>
+                    <div className="text-[10px] font-mono text-amber-900/80 bg-amber-50/60 px-2.5 py-1 rounded-md border border-amber-200/60 flex items-center justify-between">
+                      <span>Source: {isDbt ? 'PFMS_Failure_Report.pdf' : 'Relieving_Letter.pdf'}</span>
+                      <span className="font-bold">100% OCR</span>
+                    </div>
                   </div>
-                  <p className="text-xs sm:text-sm text-rose-950 font-medium leading-relaxed">
-                    {isDbt
-                      ? 'Canara Bank placed a temporary lien on account *4401 under Section 102 CrPC, which caused the central PFMS portal to fail with Error BNS-410.'
-                      : 'Your employer entered an exit date (15/11/2025) that contradicts your official relieving letter (31/10/2025), triggering Rule EPF-R09.'}
-                  </p>
-                  <div className="text-[10px] font-mono text-rose-800/80 bg-rose-100/60 px-2.5 py-1 rounded-md border border-rose-200/60 flex items-center justify-between">
-                    <span>Source: {isDbt ? 'PFMS_Failure_Report.pdf' : 'Relieving_Letter.pdf'}</span>
-                    <span className="font-bold">100% OCR</span>
-                  </div>
-                </div>
 
-                {/* Pillar 2: How INDRA Fixes It */}
-                <div className="p-5 bg-emerald-50/60 border border-emerald-200/80 rounded-2xl space-y-2.5">
-                  <div className="text-[11px] font-black uppercase tracking-wider text-emerald-800 flex items-center space-x-1.5">
-                    <span className="w-2 h-2 rounded-full bg-emerald-600" />
-                    <span>2. How INDRA Fixes It</span>
-                  </div>
-                  <p className="text-xs sm:text-sm text-emerald-950 font-medium leading-relaxed">
-                    {isDbt
-                      ? 'INDRA automatically re-links your Aadhaar APBS payment bridge to your active State Bank of India account (*8812) using binding RBI rules.'
-                      : 'INDRA generates a statutory Joint Declaration SOP v3.0 to rectify the exit date conflict with zero penalty.'}
-                  </p>
-                  <div className="text-[10px] font-mono text-emerald-800/80 bg-emerald-100/60 px-2.5 py-1 rounded-md border border-emerald-200/60 flex items-center justify-between">
-                    <span>Basis: {isDbt ? 'Gujarat HC Precedent R/SCR.A/1908/2023' : 'EPFO SOP v3.0'}</span>
-                    <span className="font-bold">VERIFIED</span>
+                  {/* Pillar 2: Statutory Remedy (Institutional Blue) */}
+                  <div className="p-5 bg-white border border-blue-200/80 rounded-2xl space-y-2.5 relative overflow-hidden shadow-sm">
+                    <div className="absolute top-0 left-0 w-1 h-full bg-blue-600" />
+                    <div className="text-[11px] font-black uppercase tracking-wider text-blue-800 flex items-center space-x-1.5">
+                      <span className="w-2 h-2 rounded-full bg-blue-600" />
+                      <span>2. Statutory Remedy</span>
+                    </div>
+                    <p className="text-xs sm:text-sm text-slate-800 font-medium leading-relaxed font-serif">
+                      {isDbt
+                        ? 'INDRA automatically re-links your Aadhaar APBS payment bridge to your active State Bank of India account (*8812) using binding RBI rules.'
+                        : 'INDRA will automatically transmit a Joint Declaration Form (JDF) under Para 3.2 of the EPS Scheme to correct the exit date anomaly.'}
+                    </p>
+                    <div className="text-[10px] font-mono text-blue-900/80 bg-blue-50/60 px-2.5 py-1 rounded-md border border-blue-200/60 flex items-center justify-between">
+                      <span>Basis: {isDbt ? 'Gujarat HC Precedent R/SCR.A/1908/2023' : 'EPS Scheme Para 3.2'}</span>
+                      <span className="font-bold">VERIFIED</span>
+                    </div>
                   </div>
                 </div>
               </div>

@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import {
   Shield, Sliders, RotateCcw, AlertTriangle,
-  CheckCircle2, LogOut, X
+  CheckCircle2, LogOut, X, Cpu, User
 } from 'lucide-react';
+import { SimpleCitizenView } from './components/SimpleCitizenView';
 import { SovereignStudioView } from './components/SovereignStudioView';
 import { ProvenanceDrawer } from './components/ProvenanceDrawer';
 import { PresenterOverlay } from './components/PresenterOverlay';
@@ -21,10 +22,10 @@ import confetti from 'canvas-confetti';
 const STATE_BADGE: Record<AgentState, { label: string; bg: string; text: string; dot: string }> = {
   CASE_CREATED: { label: 'WORKSPACE INITIALIZED', bg: 'bg-blue-50 border-blue-200', text: 'text-blue-700', dot: 'bg-blue-600' },
   EVIDENCE_ANALYSIS: { label: 'INGESTING MESSY EVIDENCE', bg: 'bg-indigo-50 border-indigo-200', text: 'text-indigo-700', dot: 'bg-indigo-600' },
-  ACTION_REQUIRED: { label: 'CITIZEN AUTHORIZATION REQUIRED', bg: 'bg-amber-50 border-amber-300', text: 'text-amber-800', dot: 'bg-amber-600' },
-  USER_APPROVAL: { label: 'CITIZEN AUTHORIZATION REQUIRED', bg: 'bg-amber-50 border-amber-400', text: 'text-amber-900', dot: 'bg-amber-600' },
+  ACTION_REQUIRED: { label: 'ACTION READY • 1 STEP TO FIX', bg: 'bg-amber-50 border-amber-300', text: 'text-amber-800', dot: 'bg-amber-600' },
+  USER_APPROVAL: { label: 'ACTION READY • 1 STEP TO FIX', bg: 'bg-amber-50 border-amber-400', text: 'text-amber-900', dot: 'bg-amber-600' },
   SUBMITTED: { label: 'TRANSMISSION CONFIRMED', bg: 'bg-cyan-50 border-cyan-300', text: 'text-cyan-800', dot: 'bg-cyan-600' },
-  WAITING: { label: 'SENTINEL MODE ACTIVE (15D SLA)', bg: 'bg-yellow-50 border-yellow-300', text: 'text-yellow-900 font-extrabold', dot: 'bg-yellow-600' },
+  WAITING: { label: 'WAITING FOR BANK (15D SLA)', bg: 'bg-yellow-50 border-yellow-300', text: 'text-yellow-900 font-extrabold', dot: 'bg-yellow-600' },
   RESPONSE_RECEIVED: { label: 'RESPONSE RECEIVED', bg: 'bg-teal-50 border-teal-300', text: 'text-teal-800', dot: 'bg-teal-600' },
   VERIFICATION: { label: 'VALIDATING SETTLEMENT', bg: 'bg-emerald-50 border-emerald-300', text: 'text-emerald-800', dot: 'bg-emerald-600' },
   ESCALATION_REQUIRED: { label: 'STATUTORY SLA BREACH • CPGRAMS ESCALATION', bg: 'bg-red-50 border-red-300', text: 'text-red-700 font-extrabold', dot: 'bg-red-600' },
@@ -36,6 +37,7 @@ export const App: React.FC = () => {
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(
     () => localStorage.getItem('indra_auth') === 'true'
   );
+  const [viewMode, setViewMode] = useState<'citizen' | 'hypervisor'>('citizen');
   const [currentCase, setCurrentCase] = useState<Case | null>(null);
   const [graphData, setGraphData] = useState<UIGraphData | null>(null);
   const [activeProvenance, setActiveProvenance] = useState<Provenance | null>(null);
@@ -150,7 +152,7 @@ export const App: React.FC = () => {
     try {
       await api.grantConsent(currentCase.id, actionId, consent);
       await refreshCase(currentCase.id);
-      showToast(consent ? 'Citizen consent granted! Ready for portal submission.' : 'Consent revoked.');
+      showToast(consent ? 'Citizen authorization granted!' : 'Consent revoked.');
     } catch (err) {
       console.error('Error granting consent:', err);
     }
@@ -162,7 +164,7 @@ export const App: React.FC = () => {
       setIsLoading(true);
       await api.submitAction(currentCase.id, actionId);
       await refreshCase(currentCase.id);
-      showToast('Action Transmitted to Portal! Case entered Sentinel WAITING state.');
+      showToast('Action Transmitted to Bank Portal! Case entered Sentinel WAITING state.');
     } catch (err) {
       console.error('Error submitting action:', err);
     } finally {
@@ -174,7 +176,7 @@ export const App: React.FC = () => {
     if (!currentCase) return;
     try {
       setIsLoading(true);
-      confetti({ particleCount: 100, spread: 80, origin: { y: 0.6 } });
+      confetti({ particleCount: 120, spread: 80, origin: { y: 0.6 } });
       const res = await api.resolveDbtChain(currentCase.id);
       await refreshCase(currentCase.id);
       showToast(`Administrative Certainty Restored! ₹48,000 credited via UTR #${res.utr}`);
@@ -254,11 +256,11 @@ export const App: React.FC = () => {
   return (
     <div className="h-screen w-screen flex flex-col bg-[#FAFAFA] text-slate-900 overflow-hidden font-sans select-none">
       {/* ============================================================ */}
-      {/* 1. TOP GLOBAL SOVEREIGN COMMAND HEADER                       */}
+      {/* 1. TOP COMMAND BAR                                           */}
       {/* ============================================================ */}
-      <header className="h-16 bg-white border-b border-slate-200 px-6 flex items-center justify-between shadow-2xs z-30">
+      <header className="h-16 bg-white border-b border-slate-200 px-4 sm:px-6 flex items-center justify-between shadow-2xs z-30">
         {/* Brand & Citizen Metadata */}
-        <div className="flex items-center space-x-4">
+        <div className="flex items-center space-x-3.5">
           <div className="w-10 h-10 rounded-2xl bg-slate-950 flex items-center justify-center shadow-xs">
             <Shield className="w-5 h-5 text-amber-500" />
           </div>
@@ -268,30 +270,52 @@ export const App: React.FC = () => {
                 INDRA
               </span>
               <span className="text-[10px] font-black uppercase bg-slate-100 text-slate-700 px-2 py-0.5 rounded border border-slate-200">
-                SOVEREIGN HYPERVISOR
-              </span>
-              <span className="text-[10px] font-mono font-black bg-blue-50 text-blue-800 border border-blue-200 px-2 py-0.5 rounded">
-                {isDbt ? 'DBT / PFMS SCHOLARSHIP' : 'EPFO PF SETTLEMENT'}
+                SOVEREIGN CITIZEN AGENT
               </span>
             </div>
-            <div className="text-xs text-slate-500 font-medium">
-              Citizen: <strong className="text-slate-800">{currentCase?.citizen_name || 'Citizen'}</strong> • Macro Goal: <span className="font-bold text-slate-700">{isDbt ? 'Secure ₹48,000 Scholarship' : 'Reconcile Exit Date Conflict'}</span>
+            <div className="text-xs text-slate-500 font-medium hidden sm:block">
+              Citizen: <strong className="text-slate-800">{currentCase?.citizen_name || 'Citizen'}</strong> • <span className="font-bold text-slate-700">{isDbt ? '₹48,000 Scholarship Blockade' : 'EPFO PF Settlement Issue'}</span>
             </div>
           </div>
         </div>
 
-        {/* Center: Live Case Status Badge */}
+        {/* Center: Mode Switcher & Status Badge */}
         <div className="flex items-center space-x-3">
-          <div className={`px-4 py-2 rounded-2xl border text-xs flex items-center space-x-2 shadow-xs ${stateCfg.bg} ${stateCfg.text}`}>
-            <span className={`w-2.5 h-2.5 rounded-full ${stateCfg.dot} animate-pulse`} />
-            <span className="font-black tracking-wider text-[11px]">{stateCfg.label}</span>
+          <div className="flex items-center bg-slate-100 p-1 rounded-2xl border border-slate-200 space-x-1 text-xs">
+            <button
+              onClick={() => setViewMode('citizen')}
+              className={`px-3 sm:px-4 py-1.5 rounded-xl font-bold flex items-center space-x-1.5 transition-all cursor-pointer ${
+                viewMode === 'citizen'
+                  ? 'bg-white text-slate-950 font-black shadow-xs'
+                  : 'text-slate-600 hover:text-slate-900'
+              }`}
+            >
+              <User className="w-3.5 h-3.5 text-blue-600" />
+              <span>Citizen Mode (Simple)</span>
+            </button>
+            <button
+              onClick={() => setViewMode('hypervisor')}
+              className={`px-3 sm:px-4 py-1.5 rounded-xl font-bold flex items-center space-x-1.5 transition-all cursor-pointer ${
+                viewMode === 'hypervisor'
+                  ? 'bg-white text-slate-950 font-black shadow-xs'
+                  : 'text-slate-600 hover:text-slate-900'
+              }`}
+            >
+              <Cpu className="w-3.5 h-3.5 text-amber-600" />
+              <span>Hypervisor Studio (Deep Tech)</span>
+            </button>
+          </div>
+
+          <div className={`hidden md:flex px-3.5 py-1.5 rounded-2xl border text-xs items-center space-x-2 shadow-2xs ${stateCfg.bg} ${stateCfg.text}`}>
+            <span className={`w-2 h-2 rounded-full ${stateCfg.dot} animate-pulse`} />
+            <span className="font-black text-[10px] tracking-wider uppercase">{stateCfg.label}</span>
           </div>
         </div>
 
         {/* Right: Domain Switcher, Presenter & Controls */}
-        <div className="flex items-center space-x-3">
+        <div className="flex items-center space-x-2 sm:space-x-3">
           {/* Domain Switcher */}
-          <div className="flex items-center bg-slate-100 p-1 rounded-2xl border border-slate-200 space-x-1 text-xs">
+          <div className="hidden lg:flex items-center bg-slate-100 p-1 rounded-2xl border border-slate-200 space-x-1 text-xs">
             <button
               onClick={() => initializeCase('dbt_failure')}
               className={`px-3 py-1.5 rounded-xl font-bold transition-all cursor-pointer ${
@@ -343,10 +367,24 @@ export const App: React.FC = () => {
       </header>
 
       {/* ============================================================ */}
-      {/* 2. MAIN UNIFIED SOVEREIGN STUDIO VIEW                        */}
+      {/* 2. MAIN VIEW AREA (CITIZEN SIMPLE vs HYPERVISOR STUDIO)      */}
       {/* ============================================================ */}
       <main className="flex-1 overflow-hidden relative">
-        {currentCase && (
+        {currentCase && viewMode === 'citizen' && (
+          <SimpleCitizenView
+            currentCase={currentCase}
+            onGrantConsent={handleGrantConsent}
+            onSubmitAction={handleSubmitAction}
+            onResolveChain={handleResolveChain}
+            onAdvanceTime={handleAdvanceTime}
+            onOpenWhy={handleOpenWhy}
+            onOpenAdvancedStudio={() => setViewMode('hypervisor')}
+            onReset={handleReset}
+            isLoading={isLoading}
+          />
+        )}
+
+        {currentCase && viewMode === 'hypervisor' && (
           <SovereignStudioView
             currentCase={currentCase}
             graphData={graphData}

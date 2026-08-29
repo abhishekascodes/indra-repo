@@ -161,7 +161,7 @@ export function App() {
   }
 
   return (
-    <div className="min-h-screen w-full bg-[#FAFAFA] font-sans text-slate-900 flex flex-col justify-between select-none">
+    <div className="min-h-screen w-full bg-white font-sans text-black flex flex-col justify-between select-none">
       {/* 1. Global Light-Theme Top Navbar */}
       <IndraNavbar
         currentCase={currentCase || ({} as Case)}
@@ -187,14 +187,14 @@ export function App() {
           />
         ) : (
           currentCase && (
-            <div className="space-y-4">
+            <div className="space-y-4 pb-20">
               {/* Back to Home Breadcrumb */}
-              <div className="max-w-[1440px] mx-auto px-4 sm:px-8 pt-4">
+              <div className="max-w-5xl mx-auto px-4 sm:px-6 pt-8">
                 <button
                   onClick={() => setActiveTab('home')}
-                  className="text-xs font-bold text-slate-500 hover:text-slate-900 transition-colors flex items-center space-x-1.5 cursor-pointer"
+                  className="text-xs font-bold text-black hover:opacity-50 transition-opacity flex items-center space-x-2 cursor-pointer uppercase tracking-widest"
                 >
-                  <span>← Back to Portal Home</span>
+                  <span>← Back</span>
                 </button>
               </div>
 
@@ -214,12 +214,6 @@ export function App() {
           )
         )}
       </main>
-
-      {/* 3. Global Institutional Footer */}
-      <footer className="w-full h-12 bg-white border-t border-slate-200/90 px-6 sm:px-10 flex items-center justify-between text-[11px] text-slate-400 font-medium flex-shrink-0">
-        <div>INDRA v1.0.0 &nbsp;|&nbsp; Persistent Administrative Intelligence</div>
-        <div>Built for citizens. By citizens.</div>
-      </footer>
 
       {/* 4. Overlays & Modals */}
       {selectedDocument && (

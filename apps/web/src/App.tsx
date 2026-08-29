@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import {
-  Shield, Sliders, RotateCcw, AlertTriangle,
-  CheckCircle2, LogOut, X, Cpu, User
+  Sliders, RotateCcw, AlertTriangle,
+  CheckCircle2, LogOut, X, HelpCircle,
+  ChevronDown, ArrowLeft
 } from 'lucide-react';
+import { PortalHomeView } from './components/PortalHomeView';
 import { SimpleCitizenView } from './components/SimpleCitizenView';
 import { SovereignStudioView } from './components/SovereignStudioView';
 import { ProvenanceDrawer } from './components/ProvenanceDrawer';
@@ -16,27 +18,14 @@ import { IdentityEntropyModal } from './components/IdentityEntropyModal';
 import { PolicyGuardrailsModal } from './components/PolicyGuardrailsModal';
 import { RedTeamLabModal } from './components/RedTeamLabModal';
 import { api } from './services/api';
-import type { Case, UIGraphData, Provenance, Node as GraphNode, AgentState } from './types';
+import type { Case, UIGraphData, Provenance, Node as GraphNode } from './types';
 import confetti from 'canvas-confetti';
-
-const STATE_BADGE: Record<AgentState, { label: string; bg: string; text: string; dot: string }> = {
-  CASE_CREATED: { label: 'WORKSPACE INITIALIZED', bg: 'bg-blue-50 border-blue-200', text: 'text-blue-700', dot: 'bg-blue-600' },
-  EVIDENCE_ANALYSIS: { label: 'INGESTING MESSY EVIDENCE', bg: 'bg-indigo-50 border-indigo-200', text: 'text-indigo-700', dot: 'bg-indigo-600' },
-  ACTION_REQUIRED: { label: 'ACTION READY • 1 STEP TO FIX', bg: 'bg-amber-50 border-amber-300', text: 'text-amber-800', dot: 'bg-amber-600' },
-  USER_APPROVAL: { label: 'ACTION READY • 1 STEP TO FIX', bg: 'bg-amber-50 border-amber-400', text: 'text-amber-900', dot: 'bg-amber-600' },
-  SUBMITTED: { label: 'TRANSMISSION CONFIRMED', bg: 'bg-cyan-50 border-cyan-300', text: 'text-cyan-800', dot: 'bg-cyan-600' },
-  WAITING: { label: 'WAITING FOR BANK (15D SLA)', bg: 'bg-yellow-50 border-yellow-300', text: 'text-yellow-900 font-extrabold', dot: 'bg-yellow-600' },
-  RESPONSE_RECEIVED: { label: 'RESPONSE RECEIVED', bg: 'bg-teal-50 border-teal-300', text: 'text-teal-800', dot: 'bg-teal-600' },
-  VERIFICATION: { label: 'VALIDATING SETTLEMENT', bg: 'bg-emerald-50 border-emerald-300', text: 'text-emerald-800', dot: 'bg-emerald-600' },
-  ESCALATION_REQUIRED: { label: 'STATUTORY SLA BREACH • CPGRAMS ESCALATION', bg: 'bg-red-50 border-red-300', text: 'text-red-700 font-extrabold', dot: 'bg-red-600' },
-  RESOLUTION: { label: 'ADMINISTRATIVE CERTAINTY RESTORED', bg: 'bg-emerald-50 border-emerald-400', text: 'text-emerald-900 font-black', dot: 'bg-emerald-600' },
-  BLOCKED: { label: 'ACTION BLOCKED', bg: 'bg-rose-50 border-rose-300', text: 'text-rose-700', dot: 'bg-rose-600' },
-};
 
 export const App: React.FC = () => {
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(
     () => localStorage.getItem('indra_auth') === 'true'
   );
+  const [activeTab, setActiveTab] = useState<'home' | 'workspace'>('home');
   const [viewMode, setViewMode] = useState<'citizen' | 'hypervisor'>('citizen');
   const [currentCase, setCurrentCase] = useState<Case | null>(null);
   const [graphData, setGraphData] = useState<UIGraphData | null>(null);
@@ -44,6 +33,7 @@ export const App: React.FC = () => {
   const [selectedWhyNode, setSelectedWhyNode] = useState<GraphNode | null>(null);
   const [isProvenanceDrawerOpen, setIsProvenanceDrawerOpen] = useState<boolean>(false);
   const [isPresenterOverlayOpen, setIsPresenterOverlayOpen] = useState<boolean>(false);
+  const [isCaseMenuOpen, setIsCaseMenuOpen] = useState<boolean>(false);
 
   // Modal states
   const [activeModal, setActiveModal] = useState<
@@ -71,7 +61,7 @@ export const App: React.FC = () => {
   }, []);
 
   // Initialize or load case
-  const initializeCase = async (domainId: string = 'dbt_failure') => {
+  const initializeCase = async (domainId: string = 'dbt_failure', openWorkspace: boolean = true) => {
     try {
       setIsLoading(true);
       const title = domainId === 'dbt_failure'
@@ -98,6 +88,10 @@ export const App: React.FC = () => {
       const graph = await api.getGraph(newCase.id);
       setGraphData(graph);
 
+      if (openWorkspace) {
+        setActiveTab('workspace');
+      }
+
       showToast(`Loaded ${domainId === 'dbt_failure' ? 'DBT Scholarship' : 'EPFO Claim'} Case for ${citizen}`);
     } catch (err) {
       console.error('Error initializing case:', err);
@@ -109,7 +103,7 @@ export const App: React.FC = () => {
 
   useEffect(() => {
     if (isAuthenticated) {
-      initializeCase('dbt_failure');
+      initializeCase('dbt_failure', false);
     }
   }, [isAuthenticated]);
 
@@ -216,7 +210,7 @@ export const App: React.FC = () => {
       setIsProvenanceDrawerOpen(false);
       await api.resetMockState();
       if (currentCase) {
-        await initializeCase(currentCase.domain_id);
+        await initializeCase(currentCase.domain_id, false);
       }
       showToast('Simulation environment reset to Day 0');
     } catch (err) {
@@ -241,125 +235,122 @@ export const App: React.FC = () => {
       <LoginScreen
         onLogin={(domainId) => {
           setIsAuthenticated(true);
-          initializeCase(domainId);
+          initializeCase(domainId, true);
         }}
       />
     );
   }
-
-  const stateCfg = currentCase
-    ? STATE_BADGE[currentCase.current_state] || { label: currentCase.current_state, bg: 'bg-slate-100 border-slate-300', text: 'text-slate-700', dot: 'bg-slate-500' }
-    : { label: 'INITIALIZING...', bg: 'bg-slate-100 border-slate-300', text: 'text-slate-700', dot: 'bg-slate-500' };
 
   const isDbt = currentCase?.domain_id === 'dbt_failure';
 
   return (
     <div className="h-screen w-screen flex flex-col bg-[#FAFAFA] text-slate-900 overflow-hidden font-sans select-none">
       {/* ============================================================ */}
-      {/* 1. TOP COMMAND BAR                                           */}
+      {/* 1. TOP HEADER (Pixel-Perfect Matching Uploaded Design)       */}
       {/* ============================================================ */}
-      <header className="h-16 bg-white border-b border-slate-200 px-4 sm:px-6 flex items-center justify-between shadow-2xs z-30">
-        {/* Brand & Citizen Metadata */}
-        <div className="flex items-center space-x-3.5">
-          <div className="w-10 h-10 rounded-2xl bg-slate-950 flex items-center justify-center shadow-xs">
-            <Shield className="w-5 h-5 text-amber-500" />
+      <header className="h-16 bg-white border-b border-slate-200/90 px-6 sm:px-8 flex items-center justify-between shadow-2xs z-30 flex-shrink-0">
+        {/* Left: INDRA Circuit Logo & Brand */}
+        <div className="flex items-center space-x-3 cursor-pointer" onClick={() => setActiveTab('home')}>
+          {/* Geometric Circuit Emblem */}
+          <div className="w-9 h-9 rounded-xl bg-slate-950 flex items-center justify-center p-1.5 shadow-xs hover:opacity-90 transition-opacity">
+            <svg viewBox="0 0 24 24" fill="none" className="w-full h-full text-cyan-400">
+              <path d="M12 2L2 7L12 12L22 7L12 2Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+              <path d="M2 17L12 22L22 17" stroke="#10B981" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+              <path d="M2 12L12 17L22 12" stroke="#3B82F6" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
           </div>
           <div>
-            <div className="flex items-center space-x-2">
-              <span className="font-black text-sm tracking-tight text-slate-900">
-                INDRA
-              </span>
-              <span className="text-[10px] font-black uppercase bg-slate-100 text-slate-700 px-2 py-0.5 rounded border border-slate-200">
-                SOVEREIGN CITIZEN AGENT
-              </span>
+            <div className="font-black text-base tracking-tight text-slate-950 leading-none">
+              INDRA
             </div>
-            <div className="text-xs text-slate-500 font-medium hidden sm:block">
-              Citizen: <strong className="text-slate-800">{currentCase?.citizen_name || 'Citizen'}</strong> • <span className="font-bold text-slate-700">{isDbt ? '₹48,000 Scholarship Blockade' : 'EPFO PF Settlement Issue'}</span>
+            <div className="text-[11px] text-slate-400 font-medium leading-none mt-1">
+              Administrative Intelligence for Citizens
             </div>
           </div>
         </div>
 
-        {/* Center: Mode Switcher & Status Badge */}
-        <div className="flex items-center space-x-3">
-          <div className="flex items-center bg-slate-100 p-1 rounded-2xl border border-slate-200 space-x-1 text-xs">
+        {/* Right Controls */}
+        <div className="flex items-center space-x-4 sm:space-x-6">
+          {/* Active Case Selector Pill */}
+          <div className="relative">
             <button
-              onClick={() => setViewMode('citizen')}
-              className={`px-3 sm:px-4 py-1.5 rounded-xl font-bold flex items-center space-x-1.5 transition-all cursor-pointer ${
-                viewMode === 'citizen'
-                  ? 'bg-white text-slate-950 font-black shadow-xs'
-                  : 'text-slate-600 hover:text-slate-900'
-              }`}
+              onClick={() => setIsCaseMenuOpen(!isCaseMenuOpen)}
+              className="px-3.5 py-1.5 bg-white hover:bg-slate-50 border border-slate-200/90 rounded-2xl text-left shadow-2xs flex items-center space-x-3 transition-colors cursor-pointer"
             >
-              <User className="w-3.5 h-3.5 text-blue-600" />
-              <span>Citizen Mode (Simple)</span>
+              <div>
+                <span className="text-[9px] font-black uppercase tracking-wider text-slate-400 block leading-none">
+                  ACTIVE CASE
+                </span>
+                <span className="text-xs font-bold text-slate-900 leading-none mt-1 block">
+                  {currentCase ? `${currentCase.citizen_name} • ${isDbt ? 'DBT Scholarship (₹48,000)' : 'EPFO Claim'}` : 'Select Case'}
+                </span>
+              </div>
+              <ChevronDown className="w-3.5 h-3.5 text-slate-400" />
             </button>
-            <button
-              onClick={() => setViewMode('hypervisor')}
-              className={`px-3 sm:px-4 py-1.5 rounded-xl font-bold flex items-center space-x-1.5 transition-all cursor-pointer ${
-                viewMode === 'hypervisor'
-                  ? 'bg-white text-slate-950 font-black shadow-xs'
-                  : 'text-slate-600 hover:text-slate-900'
-              }`}
-            >
-              <Cpu className="w-3.5 h-3.5 text-amber-600" />
-              <span>Hypervisor Studio (Deep Tech)</span>
-            </button>
+
+            {/* Dropdown Menu */}
+            {isCaseMenuOpen && (
+              <div className="absolute right-0 mt-2 w-64 bg-white border border-slate-200 rounded-2xl shadow-xl p-2 z-50 animate-in fade-in zoom-in-95 duration-150">
+                <button
+                  onClick={() => {
+                    initializeCase('dbt_failure', true);
+                    setIsCaseMenuOpen(false);
+                  }}
+                  className="w-full text-left p-2.5 hover:bg-slate-50 rounded-xl text-xs font-bold text-slate-900 cursor-pointer"
+                >
+                  <div className="text-slate-900">Aakash Verma</div>
+                  <div className="text-[10px] text-slate-400">DBT Scholarship (₹48,000)</div>
+                </button>
+                <button
+                  onClick={() => {
+                    initializeCase('epfo_claim', true);
+                    setIsCaseMenuOpen(false);
+                  }}
+                  className="w-full text-left p-2.5 hover:bg-slate-50 rounded-xl text-xs font-bold text-slate-900 cursor-pointer"
+                >
+                  <div className="text-slate-900">Pooja Sharma</div>
+                  <div className="text-[10px] text-slate-400">EPFO Claim - Exit Date Conflict</div>
+                </button>
+              </div>
+            )}
           </div>
 
-          <div className={`hidden md:flex px-3.5 py-1.5 rounded-2xl border text-xs items-center space-x-2 shadow-2xs ${stateCfg.bg} ${stateCfg.text}`}>
-            <span className={`w-2 h-2 rounded-full ${stateCfg.dot} animate-pulse`} />
-            <span className="font-black text-[10px] tracking-wider uppercase">{stateCfg.label}</span>
-          </div>
-        </div>
-
-        {/* Right: Domain Switcher, Presenter & Controls */}
-        <div className="flex items-center space-x-2 sm:space-x-3">
-          {/* Domain Switcher */}
-          <div className="hidden lg:flex items-center bg-slate-100 p-1 rounded-2xl border border-slate-200 space-x-1 text-xs">
-            <button
-              onClick={() => initializeCase('dbt_failure')}
-              className={`px-3 py-1.5 rounded-xl font-bold transition-all cursor-pointer ${
-                isDbt ? 'bg-white text-slate-950 font-black shadow-xs' : 'text-slate-600 hover:text-slate-900'
-              }`}
-            >
-              [1] DBT Scholarship
-            </button>
-            <button
-              onClick={() => initializeCase('epfo_claim')}
-              className={`px-3 py-1.5 rounded-xl font-bold transition-all cursor-pointer ${
-                !isDbt ? 'bg-white text-slate-950 font-black shadow-xs' : 'text-slate-600 hover:text-slate-900'
-              }`}
-            >
-              [2] EPFO PF Claim
-            </button>
+          {/* INDRA Core Engine Status */}
+          <div className="hidden md:flex items-center space-x-2 text-xs">
+            <span className="text-slate-500 font-medium">INDRA Core Engine</span>
+            <span className="flex items-center space-x-1 font-bold text-emerald-600">
+              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+              <span>Online</span>
+            </span>
           </div>
 
-          {/* Presenter Mode Trigger (Shift+D) */}
+          {/* Help Button */}
           <button
-            onClick={() => setIsPresenterOverlayOpen(true)}
-            className="p-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 hover:text-slate-950 border border-slate-200 rounded-2xl transition-all shadow-xs cursor-pointer"
-            title="Presenter Controls (Shift+D)"
-            aria-label="Presenter Controls"
+            onClick={() => showToast('INDRA Sovereign Administrative Hypervisor v1.0.0 Help Guide', 'info')}
+            className="flex items-center space-x-1 text-xs font-bold text-slate-600 hover:text-slate-900 cursor-pointer"
           >
-            <Sliders className="w-4 h-4" />
+            <HelpCircle className="w-4 h-4 text-slate-400" />
+            <span className="hidden sm:inline">Help</span>
           </button>
 
-          {/* Reset */}
-          <button
-            onClick={handleReset}
-            className="p-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 hover:text-slate-950 border border-slate-200 rounded-2xl transition-all shadow-xs cursor-pointer"
-            title="Reset Case (Day 0)"
-            aria-label="Reset Case"
-          >
-            <RotateCcw className="w-4 h-4" />
-          </button>
+          {/* User Profile Avatar with Menu */}
+          <div className="relative">
+            <button
+              onClick={() => setIsCaseMenuOpen(false)}
+              className="flex items-center space-x-1.5 cursor-pointer p-1 rounded-xl hover:bg-slate-50 transition-colors"
+            >
+              <div className="w-8 h-8 rounded-full bg-slate-900 text-white font-bold text-xs flex items-center justify-center shadow-xs">
+                A
+              </div>
+              <ChevronDown className="w-3 h-3 text-slate-400" />
+            </button>
+          </div>
 
-          {/* Logout */}
+          {/* Quick Exit / Logout Button */}
           <button
             onClick={handleLogout}
-            className="p-2.5 bg-slate-100 hover:bg-slate-200 text-red-600 hover:text-red-800 border border-slate-200 rounded-2xl transition-all shadow-xs cursor-pointer"
-            title="Exit Sandbox"
-            aria-label="Exit Sandbox"
+            className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-xl transition-colors cursor-pointer"
+            title="Logout"
           >
             <LogOut className="w-4 h-4" />
           </button>
@@ -367,10 +358,70 @@ export const App: React.FC = () => {
       </header>
 
       {/* ============================================================ */}
-      {/* 2. MAIN VIEW AREA (CITIZEN SIMPLE vs HYPERVISOR STUDIO)      */}
+      {/* 2. SUB-BAR FOR ACTIVE WORKSPACE NAVIGATION                   */}
+      {/* ============================================================ */}
+      {activeTab === 'workspace' && currentCase && (
+        <div className="h-11 bg-white border-b border-slate-200/80 px-6 sm:px-8 flex items-center justify-between text-xs z-20 flex-shrink-0">
+          <button
+            onClick={() => setActiveTab('home')}
+            className="flex items-center space-x-1.5 text-slate-500 hover:text-slate-900 font-bold transition-colors cursor-pointer"
+          >
+            <ArrowLeft className="w-3.5 h-3.5" />
+            <span>Back to Portal Home</span>
+          </button>
+
+          <div className="flex items-center space-x-3">
+            {/* Mode Switcher */}
+            <div className="flex items-center bg-slate-100 p-0.5 rounded-xl border border-slate-200 text-xs">
+              <button
+                onClick={() => setViewMode('citizen')}
+                className={`px-3 py-1 rounded-lg font-bold transition-all cursor-pointer ${
+                  viewMode === 'citizen' ? 'bg-white text-slate-950 font-black shadow-2xs' : 'text-slate-500'
+                }`}
+              >
+                Citizen View
+              </button>
+              <button
+                onClick={() => setViewMode('hypervisor')}
+                className={`px-3 py-1 rounded-lg font-bold transition-all cursor-pointer ${
+                  viewMode === 'hypervisor' ? 'bg-white text-slate-950 font-black shadow-2xs' : 'text-slate-500'
+                }`}
+              >
+                Hypervisor Studio
+              </button>
+            </div>
+
+            <button
+              onClick={() => setIsPresenterOverlayOpen(true)}
+              className="p-1.5 text-slate-500 hover:text-slate-800 bg-slate-50 border border-slate-200 rounded-lg cursor-pointer"
+              title="Presenter Deck (Shift+D)"
+            >
+              <Sliders className="w-3.5 h-3.5" />
+            </button>
+            <button
+              onClick={handleReset}
+              className="p-1.5 text-slate-500 hover:text-slate-800 bg-slate-50 border border-slate-200 rounded-lg cursor-pointer"
+              title="Reset Demo (Day 0)"
+            >
+              <RotateCcw className="w-3.5 h-3.5" />
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* ============================================================ */}
+      {/* 3. MAIN BODY (PORTAL HOME vs ACTIVE CASE WORKSPACE)          */}
       {/* ============================================================ */}
       <main className="flex-1 overflow-hidden relative">
-        {currentCase && viewMode === 'citizen' && (
+        {activeTab === 'home' && (
+          <PortalHomeView
+            onSelectCase={(domainId) => initializeCase(domainId, true)}
+            onOpenDemoControls={() => setIsPresenterOverlayOpen(true)}
+            onStartNewCase={() => initializeCase('dbt_failure', true)}
+          />
+        )}
+
+        {activeTab === 'workspace' && currentCase && viewMode === 'citizen' && (
           <SimpleCitizenView
             currentCase={currentCase}
             onGrantConsent={handleGrantConsent}
@@ -384,7 +435,7 @@ export const App: React.FC = () => {
           />
         )}
 
-        {currentCase && viewMode === 'hypervisor' && (
+        {activeTab === 'workspace' && currentCase && viewMode === 'hypervisor' && (
           <SovereignStudioView
             currentCase={currentCase}
             graphData={graphData}
@@ -409,7 +460,7 @@ export const App: React.FC = () => {
       </main>
 
       {/* ============================================================ */}
-      {/* 3. 480px LEFT PROVENANCE DRAWER (WHY? INTERACTION)           */}
+      {/* 4. OVERLAYS & MODALS                                         */}
       {/* ============================================================ */}
       <ProvenanceDrawer
         isOpen={isProvenanceDrawerOpen}
@@ -423,22 +474,16 @@ export const App: React.FC = () => {
         }}
       />
 
-      {/* ============================================================ */}
-      {/* 4. PRESENTER OVERLAY (Shift+D / Ctrl+Shift+O)                */}
-      {/* ============================================================ */}
       <PresenterOverlay
         isOpen={isPresenterOverlayOpen}
         onClose={() => setIsPresenterOverlayOpen(false)}
         currentCase={currentCase}
         onAdvanceTime={handleAdvanceTime}
-        onSelectDomain={initializeCase}
+        onSelectDomain={(dom) => initializeCase(dom, true)}
         onSimulateEvent={handleSimulateEvent}
         onReset={handleReset}
       />
 
-      {/* ============================================================ */}
-      {/* 5. FORENSIC MODALS (Epistemic, Debugger, Replay, etc.)       */}
-      {/* ============================================================ */}
       {activeModal === 'epistemic' && currentCase && (
         <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm flex items-center justify-center p-6">
           <div className="w-full max-w-4xl max-h-[90vh] overflow-y-auto">
@@ -506,9 +551,7 @@ export const App: React.FC = () => {
         </div>
       )}
 
-      {/* ============================================================ */}
-      {/* 6. TOAST NOTIFICATIONS BANNER                                */}
-      {/* ============================================================ */}
+      {/* Toast Notifications */}
       {toastMessage && (
         <div className="fixed bottom-6 right-6 z-50 animate-in fade-in slide-in-from-bottom-4 duration-200">
           <div className={`px-4 py-3 rounded-2xl shadow-xl border flex items-center space-x-3 text-xs font-bold ${

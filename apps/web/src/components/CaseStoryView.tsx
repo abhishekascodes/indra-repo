@@ -11,6 +11,7 @@ import { ActionGraphModal } from './ActionGraphModal';
 import { IdentityEntropyModal } from './IdentityEntropyModal';
 import { CounterfactualModal } from './CounterfactualModal';
 import { SystemicFailuresModal } from './SystemicFailuresModal';
+import { ConsentSlider } from './ConsentSlider';
 
 interface CaseStoryViewProps {
   currentCase: Case;
@@ -304,9 +305,23 @@ export const CaseStoryView: React.FC<CaseStoryViewProps> = ({
                   </span>
                 </div>
 
-                {/* Big Step Action Buttons */}
+                {/* Slide to Authorize Interaction */}
+                {!action.citizen_consent && !isSubmitted && (
+                  <div className="pt-2">
+                    <ConsentSlider
+                      actionTitle={action.purpose}
+                      targetAuthority={action.target_institution}
+                      legalBasis={action.legal_basis || 'Procedural Directive'}
+                      isAuthorized={action.citizen_consent}
+                      disabled={isLoading}
+                      onAuthorize={() => onGrantConsent(action.id, true)}
+                    />
+                  </div>
+                )}
+
+                {/* Direct Action Control Buttons */}
                 <div className="pt-2 border-t border-slate-200 flex items-center space-x-3">
-                  {/* Step 1: Consent */}
+                  {/* Step 1: Consent Button */}
                   <button
                     onClick={() => onGrantConsent(action.id, !action.citizen_consent)}
                     disabled={isSubmitted || isLoading}

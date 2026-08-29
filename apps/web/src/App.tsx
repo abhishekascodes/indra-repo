@@ -2,7 +2,9 @@ import React, { useState, useEffect } from 'react';
 import { Header, type PersonaType, type ActiveViewType } from './components/Header';
 import { CaseStoryView } from './components/CaseStoryView';
 import { EvidenceVault } from './components/EvidenceVault';
-import { CaseGraphView } from './components/CaseGraphView';
+import { CausalMasonryCanvas } from './components/CausalMasonryCanvas';
+import { ProvenanceDrawer } from './components/ProvenanceDrawer';
+import { PresenterOverlay } from './components/PresenterOverlay';
 import { TimelineRail } from './components/TimelineRail';
 import { AdministrativeDebugger } from './components/AdministrativeDebugger';
 import { FlightRecorderReplay } from './components/FlightRecorderReplay';
@@ -14,7 +16,7 @@ import { CounterfactualModal } from './components/CounterfactualModal';
 import { SystemicFailuresModal } from './components/SystemicFailuresModal';
 import { LoginScreen } from './components/LoginScreen';
 import { api } from './services/api';
-import type { Case, UIGraphData, Provenance } from './types';
+import type { Case, UIGraphData, Provenance, Node as GraphNode } from './types';
 import { CheckCircle2, AlertTriangle, X } from 'lucide-react';
 
 export const App: React.FC = () => {
@@ -25,6 +27,9 @@ export const App: React.FC = () => {
   const [currentCase, setCurrentCase] = useState<Case | null>(null);
   const [graphData, setGraphData] = useState<UIGraphData | null>(null);
   const [activeProvenance, setActiveProvenance] = useState<Provenance | null>(null);
+  const [selectedWhyNode, setSelectedWhyNode] = useState<GraphNode | null>(null);
+  const [isProvenanceDrawerOpen, setIsProvenanceDrawerOpen] = useState<boolean>(false);
+  const [isPresenterOverlayOpen, setIsPresenterOverlayOpen] = useState<boolean>(false);
   const [highlightedChainNodeIds, setHighlightedChainNodeIds] = useState<string[]>([]);
   const [activeView, setActiveView] = useState<ActiveViewType>('story');
   const [isLoading, setIsLoading] = useState<boolean>(false);
@@ -34,6 +39,18 @@ export const App: React.FC = () => {
     setToastMessage({ text, type });
     setTimeout(() => setToastMessage(null), 4000);
   };
+
+  // Keyboard shortcut listener for Presenter Mode (Shift+D or Ctrl+Shift+O / Cmd+Shift+O)
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.shiftKey && (e.key === 'D' || e.key === 'd')) || (e.shiftKey && (e.ctrlKey || e.metaKey) && (e.key === 'O' || e.key === 'o'))) {
+        e.preventDefault();
+        setIsPresenterOverlayOpen(prev => !prev);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
 
   // Initialize or load case
   const initializeCase = async (domainId: string = 'dbt_failure') => {
@@ -179,7 +196,7 @@ export const App: React.FC = () => {
       setIsLoading(true);
       const res = await api.simulateEvent(currentCase.id, eventType);
       await refreshCase(currentCase.id);
-      showToast(res.message || 'Simulation event executed');
+      showToast(res.message || `Simulation event '${eventType}' executed`);
     } catch (err) {
       console.error('Error simulating event:', err);
     } finally {
@@ -202,10 +219,19 @@ export const App: React.FC = () => {
     }
   };
 
+  const handleOpenWhy = (node: GraphNode) => {
+    setSelectedWhyNode(node);
+    if (node.provenance) {
+      setActiveProvenance(node.provenance);
+    }
+    setIsProvenanceDrawerOpen(true);
+  };
+
   const handleReset = async () => {
     try {
       setIsLoading(true);
       setHighlightedChainNodeIds([]);
+      setIsProvenanceDrawerOpen(false);
       await api.resetMockState();
       if (currentCase) {
         await initializeCase(currentCase.domain_id);
@@ -240,7 +266,7 @@ export const App: React.FC = () => {
   }
 
   return (
-    <div className="h-screen w-screen flex flex-col bg-slate-100 text-slate-900 overflow-hidden font-sans">
+    <div className="h-screen w-screen flex flex-col bg-[#FAFAFA] text-slate-900 overflow-hidden font-sans select-none">
       {/* 1. Header Command Bar & Workspace View Switcher */}
       <Header
         currentCase={currentCase}
@@ -290,12 +316,15 @@ export const App: React.FC = () => {
           />
         )}
 
-        {/* VIEW 4: CASE GRAPH TOPOLOGY */}
+        {/* VIEW 4: CAUSAL MASONRY & SEMANTIC ZOOM CANVAS */}
         {activeView === 'graph' && (
-          <CaseGraphView
+          <CausalMasonryCanvas
             graphData={graphData}
+            documents={currentCase?.documents || []}
             onSelectProvenance={handleSelectProvenance}
+            onOpenWhy={handleOpenWhy}
             highlightedChainNodeIds={highlightedChainNodeIds}
+            focusedNodeId={selectedWhyNode?.id}
           />
         )}
 
@@ -384,7 +413,32 @@ export const App: React.FC = () => {
         )}
       </main>
 
-      {/* 3. Toast Notification Banner */}
+      {/* 3. Left Slide-Out Provenance Drawer (480px) */}
+      <ProvenanceDrawer
+        isOpen={isProvenanceDrawerOpen}
+        selectedNode={selectedWhyNode}
+        provenance={activeProvenance}
+        documents={currentCase?.documents || []}
+        onClose={() => setIsProvenanceDrawerOpen(false)}
+        onJumpToDocumentRegion={(docId) => {
+          setIsProvenanceDrawerOpen(false);
+          setActiveView('evidence');
+          showToast(`Focused document '${docId}' at Level 5 Bounding Box`);
+        }}
+      />
+
+      {/* 4. Presenter / Demo Mode Overlay (Shift+D or Ctrl+Shift+O) */}
+      <PresenterOverlay
+        isOpen={isPresenterOverlayOpen}
+        onClose={() => setIsPresenterOverlayOpen(false)}
+        currentCase={currentCase}
+        onAdvanceTime={handleAdvanceTime}
+        onSelectDomain={initializeCase}
+        onSimulateEvent={handleSimulateEvent}
+        onReset={handleReset}
+      />
+
+      {/* 5. Toast Notification Banner */}
       {toastMessage && (
         <div className="fixed bottom-6 right-6 z-50 animate-in fade-in slide-in-from-bottom-4 duration-200">
           <div className={`px-4 py-3 rounded-2xl shadow-xl border flex items-center space-x-3 text-xs font-bold ${
@@ -402,7 +456,7 @@ export const App: React.FC = () => {
             <span>{toastMessage.text}</span>
             <button
               onClick={() => setToastMessage(null)}
-              className="p-1 hover:bg-white/20 rounded-full transition-colors ml-2"
+              className="p-1 hover:bg-white/20 rounded-full transition-colors ml-2 cursor-pointer"
             >
               <X className="w-3.5 h-3.5" />
             </button>

@@ -1,37 +1,44 @@
 import React, { useState, useEffect } from 'react';
-import { Header, type PersonaType, type ActiveViewType } from './components/Header';
-import { CaseStoryView } from './components/CaseStoryView';
-import { EvidenceVault } from './components/EvidenceVault';
+import {
+  Shield, Sliders, RotateCcw, AlertTriangle,
+  CheckCircle2, LogOut, FileCheck, X
+} from 'lucide-react';
 import { CausalMasonryCanvas } from './components/CausalMasonryCanvas';
 import { ProvenanceDrawer } from './components/ProvenanceDrawer';
+import { ConsentSlider } from './components/ConsentSlider';
+import { SentinelOverlay } from './components/SentinelOverlay';
 import { PresenterOverlay } from './components/PresenterOverlay';
-import { TimelineRail } from './components/TimelineRail';
-import { AdministrativeDebugger } from './components/AdministrativeDebugger';
-import { FlightRecorderReplay } from './components/FlightRecorderReplay';
-import { CaseMemoryPanel } from './components/CaseMemoryPanel';
-import { EpistemicLedgerModal } from './components/EpistemicLedgerModal';
-import { ActionGraphModal } from './components/ActionGraphModal';
-import { IdentityEntropyModal } from './components/IdentityEntropyModal';
-import { CounterfactualModal } from './components/CounterfactualModal';
-import { SystemicFailuresModal } from './components/SystemicFailuresModal';
 import { LoginScreen } from './components/LoginScreen';
+import { EpistemicLedgerModal } from './components/EpistemicLedgerModal';
 import { api } from './services/api';
-import type { Case, UIGraphData, Provenance, Node as GraphNode } from './types';
-import { CheckCircle2, AlertTriangle, X } from 'lucide-react';
+import type { Case, UIGraphData, Provenance, Node as GraphNode, AgentState } from './types';
+import confetti from 'canvas-confetti';
+
+const STATE_BADGE: Record<AgentState, { label: string; bg: string; text: string; dot: string }> = {
+  CASE_CREATED: { label: 'WORKSPACE INITIALIZED', bg: 'bg-blue-50 border-blue-200', text: 'text-blue-700', dot: 'bg-blue-600' },
+  EVIDENCE_ANALYSIS: { label: 'INGESTING MESSY EVIDENCE', bg: 'bg-indigo-50 border-indigo-200', text: 'text-indigo-700', dot: 'bg-indigo-600' },
+  ACTION_REQUIRED: { label: 'ACTION GENERATION COMPLETE', bg: 'bg-amber-50 border-amber-300', text: 'text-amber-800', dot: 'bg-amber-600' },
+  USER_APPROVAL: { label: 'CITIZEN AUTHORIZATION REQUIRED', bg: 'bg-amber-50 border-amber-400', text: 'text-amber-900', dot: 'bg-amber-600' },
+  SUBMITTED: { label: 'TRANSMISSION CONFIRMED', bg: 'bg-cyan-50 border-cyan-300', text: 'text-cyan-800', dot: 'bg-cyan-600' },
+  WAITING: { label: 'AWAITING INSTITUTIONAL RESPONSE (15D SLA)', bg: 'bg-yellow-50 border-yellow-300', text: 'text-yellow-900 font-extrabold', dot: 'bg-yellow-600' },
+  RESPONSE_RECEIVED: { label: 'RESPONSE RECEIVED', bg: 'bg-teal-50 border-teal-300', text: 'text-teal-800', dot: 'bg-teal-600' },
+  VERIFICATION: { label: 'VALIDATING INSTITUTIONAL STATE', bg: 'bg-emerald-50 border-emerald-300', text: 'text-emerald-800', dot: 'bg-emerald-600' },
+  ESCALATION_REQUIRED: { label: 'SLA BREACH DETECTED • CPGRAMS ESCALATION', bg: 'bg-red-50 border-red-300', text: 'text-red-700 font-extrabold', dot: 'bg-red-600' },
+  RESOLUTION: { label: 'ADMINISTRATIVE CERTAINTY RESTORED', bg: 'bg-emerald-50 border-emerald-400', text: 'text-emerald-900 font-black', dot: 'bg-emerald-600' },
+  BLOCKED: { label: 'ACTION BLOCKED', bg: 'bg-rose-50 border-rose-300', text: 'text-rose-700', dot: 'bg-rose-600' },
+};
 
 export const App: React.FC = () => {
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(
     () => localStorage.getItem('indra_auth') === 'true'
   );
-  const [persona, setPersona] = useState<PersonaType>('citizen');
   const [currentCase, setCurrentCase] = useState<Case | null>(null);
   const [graphData, setGraphData] = useState<UIGraphData | null>(null);
   const [activeProvenance, setActiveProvenance] = useState<Provenance | null>(null);
   const [selectedWhyNode, setSelectedWhyNode] = useState<GraphNode | null>(null);
   const [isProvenanceDrawerOpen, setIsProvenanceDrawerOpen] = useState<boolean>(false);
   const [isPresenterOverlayOpen, setIsPresenterOverlayOpen] = useState<boolean>(false);
-  const [highlightedChainNodeIds, setHighlightedChainNodeIds] = useState<string[]>([]);
-  const [activeView, setActiveView] = useState<ActiveViewType>('story');
+  const [showEpistemicLedger, setShowEpistemicLedger] = useState<boolean>(false);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [toastMessage, setToastMessage] = useState<{ text: string; type: 'success' | 'info' | 'warning' } | null>(null);
 
@@ -56,7 +63,6 @@ export const App: React.FC = () => {
   const initializeCase = async (domainId: string = 'dbt_failure') => {
     try {
       setIsLoading(true);
-      setHighlightedChainNodeIds([]);
       const title = domainId === 'dbt_failure'
         ? 'Cross-Domain DBT Scholarship Failure'
         : 'EPFO Form 19 Claim Settlement Blockade';
@@ -130,26 +136,18 @@ export const App: React.FC = () => {
     }
   };
 
-  const handleGrantConsent = async (actionId: string, consent: boolean) => {
-    if (!currentCase) return;
-    try {
-      await api.grantConsent(currentCase.id, actionId, consent);
-      await refreshCase(currentCase.id);
-      showToast(consent ? 'Citizen consent granted! Ready for portal submission.' : 'Consent revoked.');
-    } catch (err) {
-      console.error('Error granting consent:', err);
-    }
-  };
-
-  const handleSubmitAction = async (actionId: string) => {
+  const handleGrantConsentAndSubmit = async (actionId: string) => {
     if (!currentCase) return;
     try {
       setIsLoading(true);
+      // 1. Grant citizen consent
+      await api.grantConsent(currentCase.id, actionId, true);
+      // 2. Submit representation to portal
       await api.submitAction(currentCase.id, actionId);
       await refreshCase(currentCase.id);
-      showToast('Action submitted directly to Bank / NPCI portal. Case entered WAITING state.');
+      showToast('Action Authorized & Transmitted to Portal! Case entered Sentinel WAITING state.');
     } catch (err) {
-      console.error('Error submitting action:', err);
+      console.error('Error executing consent and submission:', err);
     } finally {
       setIsLoading(false);
     }
@@ -159,32 +157,13 @@ export const App: React.FC = () => {
     if (!currentCase) return;
     try {
       setIsLoading(true);
+      confetti({ particleCount: 90, spread: 80, origin: { y: 0.6 } });
       const res = await api.resolveDbtChain(currentCase.id);
       await refreshCase(currentCase.id);
-      showToast(`Payment Disbursed! ₹48,000 credited successfully via UTR #${res.utr}`);
+      showToast(`Administrative Certainty Restored! ₹48,000 credited via UTR #${res.utr}`);
     } catch (err) {
       console.error('Error resolving chain:', err);
       showToast('Prerequisites not yet satisfied in bank portal', 'warning');
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const handleExecuteAutopilot = async () => {
-    if (!currentCase) return;
-    try {
-      setIsLoading(true);
-      showToast('Executing Autonomous Case Resolution...', 'info');
-      const res = await api.executeAutopilot(currentCase.id);
-      await refreshCase(currentCase.id);
-      if (res.utr) {
-        showToast(`Autonomous Resolution Completed! ₹48,000 credited via UTR #${res.utr}`);
-      } else {
-        showToast('Autonomous Resolution Completed Successfully!');
-      }
-    } catch (err) {
-      console.error('Error executing autopilot:', err);
-      showToast('Error during autonomous execution', 'warning');
     } finally {
       setIsLoading(false);
     }
@@ -204,21 +183,6 @@ export const App: React.FC = () => {
     }
   };
 
-  const handleToggleCausalChain = (nodeIds: string[]) => {
-    setHighlightedChainNodeIds(nodeIds);
-    setPersona('engineer');
-    setActiveView('graph');
-    showToast('Causal path highlighted in graph topology');
-  };
-
-  const handleSelectProvenance = (prov: Provenance | null) => {
-    setActiveProvenance(prov);
-    if (prov) {
-      setActiveView('evidence');
-      showToast(`Focused Page ${prov.page_number} in Evidence Vault`);
-    }
-  };
-
   const handleOpenWhy = (node: GraphNode) => {
     setSelectedWhyNode(node);
     if (node.provenance) {
@@ -230,7 +194,6 @@ export const App: React.FC = () => {
   const handleReset = async () => {
     try {
       setIsLoading(true);
-      setHighlightedChainNodeIds([]);
       setIsProvenanceDrawerOpen(false);
       await api.resetMockState();
       if (currentCase) {
@@ -250,7 +213,7 @@ export const App: React.FC = () => {
     setIsAuthenticated(false);
     setCurrentCase(null);
     setGraphData(null);
-    showToast('Logged out of demo session', 'info');
+    showToast('Logged out to Gateway', 'info');
   };
 
   // If not authenticated, render Demo Login Screen
@@ -265,169 +228,204 @@ export const App: React.FC = () => {
     );
   }
 
+  const stateCfg = currentCase
+    ? STATE_BADGE[currentCase.current_state] || { label: currentCase.current_state, bg: 'bg-slate-100 border-slate-300', text: 'text-slate-700', dot: 'bg-slate-500' }
+    : { label: 'INITIALIZING...', bg: 'bg-slate-100 border-slate-300', text: 'text-slate-700', dot: 'bg-slate-500' };
+
+  const currentAction = currentCase?.actions?.[0];
+  const isWaitingState = currentCase?.current_state === 'WAITING' || currentCase?.current_state === 'ESCALATION_REQUIRED';
+  const isResolvedState = currentCase?.current_state === 'RESOLUTION';
+  const isDbt = currentCase?.domain_id === 'dbt_failure';
+
   return (
-    <div className="h-screen w-screen flex flex-col bg-[#FAFAFA] text-slate-900 overflow-hidden font-sans select-none">
-      {/* 1. Header Command Bar & Workspace View Switcher */}
-      <Header
-        currentCase={currentCase}
-        persona={persona}
-        onSelectPersona={setPersona}
-        activeView={activeView}
-        onSelectView={setActiveView}
-        onAdvanceTime={handleAdvanceTime}
-        onSelectDomain={initializeCase}
-        onSimulateEvent={handleSimulateEvent}
-        onExecuteAutopilot={handleExecuteAutopilot}
-        onReset={handleReset}
-        onLogout={handleLogout}
-        isLoading={isLoading}
-      />
+    <div className="h-screen w-screen relative bg-[#FAFAFA] text-slate-900 overflow-hidden font-sans select-none flex flex-col">
+      {/* ============================================================ */}
+      {/* 1. TOP-LEFT CONTEXTUAL METADATA (Bible Part 4: 32px Anchor)  */}
+      {/* ============================================================ */}
+      <div className="absolute top-6 left-8 z-30 pointer-events-auto flex items-center space-x-3.5">
+        <div className="flex items-center space-x-3 bg-white/95 backdrop-blur-md border border-slate-200 rounded-2xl p-2.5 px-4 shadow-sm">
+          <div className="w-8 h-8 rounded-xl bg-slate-950 flex items-center justify-center shadow-xs">
+            <Shield className="w-4 h-4 text-amber-500" />
+          </div>
+          <div>
+            <div className="flex items-center space-x-1.5">
+              <span className="font-black text-xs tracking-wider text-slate-900">
+                INDRA CORE: {isDbt ? 'PFMS / DBT WELFARE' : 'EPFO PENSION & PF CLAIMS'}
+              </span>
+              <span className="text-[9px] font-mono font-black bg-blue-50 text-blue-800 border border-blue-200 px-1.5 py-0.2 rounded">
+                SOVEREIGN HYPERVISOR
+              </span>
+            </div>
+            <div className="text-[11px] text-slate-500 font-medium mt-0.5">
+              Citizen: <strong className="text-slate-800">{currentCase?.citizen_name || 'Citizen'}</strong> • Objective: <span className="font-bold text-slate-700">{isDbt ? 'Secure ₹48,000 Scholarship' : 'Reconcile Exit Date'}</span>
+            </div>
+          </div>
+        </div>
+      </div>
 
-      {/* 2. Main Full-Width Active View Canvas */}
-      <main className="flex-1 overflow-hidden relative">
-        {/* VIEW 1: CASE STORY & RESOLUTION HUB (Default for Citizen) */}
-        {activeView === 'story' && currentCase && (
-          <CaseStoryView
+      {/* ============================================================ */}
+      {/* 2. TOP-RIGHT GLOBAL CONTROL LAYER (Bible Part 4: 32px Anchor)*/}
+      {/* ============================================================ */}
+      <div className="absolute top-6 right-8 z-30 pointer-events-auto flex items-center space-x-3">
+        {/* State Badge */}
+        <div className={`px-4 py-2 rounded-2xl border text-xs flex items-center space-x-2 shadow-xs bg-white/95 backdrop-blur-md ${stateCfg.bg} ${stateCfg.text}`}>
+          <span className={`w-2 h-2 rounded-full ${stateCfg.dot} animate-pulse`} />
+          <span className="font-black tracking-wider text-[11px]">{stateCfg.label}</span>
+        </div>
+
+        {/* Epistemic Ledger Audit Button */}
+        <button
+          onClick={() => setShowEpistemicLedger(true)}
+          className="px-3.5 py-2 bg-white/95 hover:bg-slate-50 text-slate-800 border border-slate-200 rounded-2xl text-xs font-bold flex items-center space-x-1.5 transition-all shadow-xs cursor-pointer"
+          title="Inspect Epistemic Ledger (Auditor View)"
+        >
+          <FileCheck className="w-3.5 h-3.5 text-blue-600" />
+          <span>Epistemic Ledger</span>
+        </button>
+
+        {/* Domain Switcher */}
+        <div className="flex items-center bg-white/95 backdrop-blur-md border border-slate-200 p-1 rounded-2xl shadow-xs space-x-1 text-xs">
+          <button
+            onClick={() => initializeCase('dbt_failure')}
+            className={`px-3 py-1.5 rounded-xl font-bold transition-all cursor-pointer ${
+              isDbt ? 'bg-slate-900 text-white font-black shadow-xs' : 'text-slate-600 hover:text-slate-900'
+            }`}
+          >
+            [1] DBT Scholarship
+          </button>
+          <button
+            onClick={() => initializeCase('epfo_claim')}
+            className={`px-3 py-1.5 rounded-xl font-bold transition-all cursor-pointer ${
+              !isDbt ? 'bg-slate-900 text-white font-black shadow-xs' : 'text-slate-600 hover:text-slate-900'
+            }`}
+          >
+            [2] EPFO PF Claim
+          </button>
+        </div>
+
+        {/* Presenter Mode Trigger (Shift+D) */}
+        <button
+          onClick={() => setIsPresenterOverlayOpen(true)}
+          className="p-2.5 bg-white/95 hover:bg-slate-50 text-slate-700 hover:text-slate-950 border border-slate-200 rounded-2xl transition-all shadow-xs cursor-pointer"
+          title="Presenter Controls (Shift+D)"
+          aria-label="Presenter Controls"
+        >
+          <Sliders className="w-4 h-4" />
+        </button>
+
+        {/* Reset */}
+        <button
+          onClick={handleReset}
+          className="p-2.5 bg-white/95 hover:bg-slate-50 text-slate-700 hover:text-slate-950 border border-slate-200 rounded-2xl transition-all shadow-xs cursor-pointer"
+          title="Reset Case (Day 0)"
+          aria-label="Reset Case"
+        >
+          <RotateCcw className="w-4 h-4" />
+        </button>
+
+        {/* Logout */}
+        <button
+          onClick={handleLogout}
+          className="p-2.5 bg-white/95 hover:bg-slate-50 text-red-600 hover:text-red-800 border border-slate-200 rounded-2xl transition-all shadow-xs cursor-pointer"
+          title="Exit Sandbox"
+          aria-label="Exit Sandbox"
+        >
+          <LogOut className="w-4 h-4" />
+        </button>
+      </div>
+
+      {/* ============================================================ */}
+      {/* 3. 100% VIEWPORT CAUSAL MASONRY CANVAS (Primary Theater)     */}
+      {/* ============================================================ */}
+      <main className="flex-1 w-full h-full relative overflow-hidden">
+        <CausalMasonryCanvas
+          graphData={graphData}
+          documents={currentCase?.documents || []}
+          onSelectProvenance={setActiveProvenance}
+          onOpenWhy={handleOpenWhy}
+          focusedNodeId={selectedWhyNode?.id}
+        />
+      </main>
+
+      {/* ============================================================ */}
+      {/* 4. BOTTOM-CENTER ACTION CONSOLE (Bible Part 4: 40px Anchor)  */}
+      {/* ============================================================ */}
+      <div className="absolute bottom-8 left-1/2 -translate-x-1/2 z-30 w-full max-w-2xl px-4 pointer-events-auto">
+        {/* State A: Citizen Consent Slider (USER_APPROVAL / ACTION_REQUIRED) */}
+        {!isWaitingState && !isResolvedState && currentAction && (
+          <ConsentSlider
+            actionTitle={currentAction.purpose}
+            targetAuthority={currentAction.target_institution}
+            legalBasis={currentAction.legal_basis || 'Procedural Directive'}
+            isAuthorized={currentAction.citizen_consent}
+            disabled={isLoading}
+            onAuthorize={() => handleGrantConsentAndSubmit(currentAction.id)}
+          />
+        )}
+
+        {/* State B: Sentinel Temporal Mode (WAITING / ESCALATION_REQUIRED) */}
+        {isWaitingState && currentCase && (
+          <SentinelOverlay
             currentCase={currentCase}
-            onGrantConsent={handleGrantConsent}
-            onSubmitAction={handleSubmitAction}
-            onResolveChain={handleResolveChain}
-            onExecuteAutopilot={handleExecuteAutopilot}
-            onHighlightCausalChain={handleToggleCausalChain}
-            onViewGraph={() => {
-              setPersona('engineer');
-              setActiveView('graph');
-            }}
-            isLoading={isLoading}
+            onAdvanceTime={handleAdvanceTime}
+            onSimulateResponse={handleResolveChain}
           />
         )}
 
-        {/* VIEW 2: ADMINISTRATIVE DEBUGGER ("DevTools for Bureaucracy") */}
-        {activeView === 'debugger' && currentCase && (
-          <AdministrativeDebugger
-            currentCase={currentCase}
-          />
-        )}
-
-        {/* VIEW 3: BITEMPORAL FLIGHT RECORDER (Historical Replay) */}
-        {activeView === 'replay' && currentCase && (
-          <FlightRecorderReplay
-            currentCase={currentCase}
-          />
-        )}
-
-        {/* VIEW 4: CAUSAL MASONRY & SEMANTIC ZOOM CANVAS */}
-        {activeView === 'graph' && (
-          <CausalMasonryCanvas
-            graphData={graphData}
-            documents={currentCase?.documents || []}
-            onSelectProvenance={handleSelectProvenance}
-            onOpenWhy={handleOpenWhy}
-            highlightedChainNodeIds={highlightedChainNodeIds}
-            focusedNodeId={selectedWhyNode?.id}
-          />
-        )}
-
-        {/* VIEW 5: EVIDENCE VAULT & PROVENANCE */}
-        {activeView === 'evidence' && (
-          <EvidenceVault
-            documents={currentCase?.documents || []}
-            activeProvenance={activeProvenance}
-            onSelectProvenance={setActiveProvenance}
-          />
-        )}
-
-        {/* VIEW 6: PERSISTENT CASE MEMORY & CONTEXT */}
-        {activeView === 'memory' && currentCase && (
-          <CaseMemoryPanel
-            currentCase={currentCase}
-          />
-        )}
-
-        {/* VIEW 7: CHRONOLOGY & TIMELINE */}
-        {activeView === 'timeline' && currentCase && (
-          <div className="h-full p-8 overflow-y-auto bg-slate-50 flex flex-col justify-center">
-            <div className="max-w-4xl mx-auto w-full bg-white rounded-2xl border border-slate-200 p-6 shadow-sm">
-              <h3 className="text-base font-extrabold text-slate-900 mb-1">
-                Case Chronology & SLA Timeline
+        {/* State C: Resolution Restoration Banner (RESOLUTION) */}
+        {isResolvedState && (
+          <div className="bg-white border-2 border-emerald-500 rounded-3xl p-6 shadow-2xl space-y-4 text-center font-sans animate-in zoom-in-95 duration-300">
+            <div className="w-12 h-12 mx-auto rounded-2xl bg-emerald-100 border border-emerald-300 flex items-center justify-center">
+              <CheckCircle2 className="w-6 h-6 text-emerald-700" />
+            </div>
+            <div>
+              <span className="text-[10px] font-black uppercase tracking-wider text-emerald-800 bg-emerald-100 px-3 py-1 rounded-full">
+                ADMINISTRATIVE CERTAINTY RESTORED
+              </span>
+              <h3 className="text-lg font-black text-slate-900 mt-2">
+                {isDbt ? '₹48,000.00 Scholarship Disbursed Successfully' : 'PF Claim Settlement Verified & Approved'}
               </h3>
-              <p className="text-xs text-slate-500 mb-6">
-                Chronological sequence of all empirical extractions, citizen consents, portal submissions, and time-bound statutory escalations.
+              <p className="text-xs text-slate-600 mt-1">
+                Central Treasury confirmation received. Receipt: <strong className="font-mono text-slate-800">PFMS-UTR-34F5BBFFF2</strong>.
               </p>
-              <TimelineRail
-                timeline={currentCase.timeline}
-                simulatedDay={currentCase.simulated_day}
-              />
+            </div>
+
+            <div className="flex items-center justify-center space-x-3 pt-2">
+              <button
+                onClick={() => setShowEpistemicLedger(true)}
+                className="px-4 py-2 bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold rounded-xl shadow-xs transition-all cursor-pointer"
+              >
+                Inspect Official Audit Certificate
+              </button>
+              <button
+                onClick={handleReset}
+                className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold rounded-xl border border-slate-300 transition-all cursor-pointer"
+              >
+                Restart Demonstration (Day 0)
+              </button>
             </div>
           </div>
         )}
+      </div>
 
-        {/* VIEW 8: EPISTEMIC FACT LEDGER (Auditor View) */}
-        {activeView === 'epistemic_ledger' && currentCase && (
-          <div className="h-full p-6 overflow-y-auto bg-slate-100 flex flex-col justify-center">
-            <EpistemicLedgerModal
-              currentCase={currentCase}
-              onClose={() => setActiveView('story')}
-            />
-          </div>
-        )}
-
-        {/* VIEW 9: ACTION GRAPH (ERU) */}
-        {activeView === 'eru' && currentCase && (
-          <div className="h-full p-6 overflow-y-auto bg-slate-100 flex flex-col justify-center">
-            <ActionGraphModal
-              currentCase={currentCase}
-              onClose={() => setActiveView('graph')}
-            />
-          </div>
-        )}
-
-        {/* VIEW 10: IDENTITY ENTROPY ENGINE */}
-        {activeView === 'identity' && currentCase && (
-          <div className="h-full p-6 overflow-y-auto bg-slate-100 flex flex-col justify-center">
-            <IdentityEntropyModal
-              currentCase={currentCase}
-              onClose={() => setActiveView('graph')}
-            />
-          </div>
-        )}
-
-        {/* VIEW 11: COUNTERFACTUAL WHAT-IF SIMULATION */}
-        {activeView === 'counterfactual' && currentCase && (
-          <div className="h-full p-6 overflow-y-auto bg-slate-100 flex flex-col justify-center">
-            <CounterfactualModal
-              currentCase={currentCase}
-              onClose={() => setActiveView('graph')}
-            />
-          </div>
-        )}
-
-        {/* VIEW 12: SYSTEMIC FAILURE GRAPH */}
-        {activeView === 'systemic' && currentCase && (
-          <div className="h-full p-6 overflow-y-auto bg-slate-100 flex flex-col justify-center">
-            <SystemicFailuresModal
-              currentCase={currentCase}
-              onClose={() => setActiveView('graph')}
-            />
-          </div>
-        )}
-      </main>
-
-      {/* 3. Left Slide-Out Provenance Drawer (480px) */}
+      {/* ============================================================ */}
+      {/* 5. 480px LEFT PROVENANCE DRAWER (Bible Part 4 & 16)          */}
+      {/* ============================================================ */}
       <ProvenanceDrawer
         isOpen={isProvenanceDrawerOpen}
         selectedNode={selectedWhyNode}
         provenance={activeProvenance}
         documents={currentCase?.documents || []}
         onClose={() => setIsProvenanceDrawerOpen(false)}
-        onJumpToDocumentRegion={(docId) => {
+        onJumpToDocumentRegion={() => {
           setIsProvenanceDrawerOpen(false);
-          setActiveView('evidence');
-          showToast(`Focused document '${docId}' at Level 5 Bounding Box`);
+          showToast('Zoomed camera to Level 5 OCR Bounding Box');
         }}
       />
 
-      {/* 4. Presenter / Demo Mode Overlay (Shift+D or Ctrl+Shift+O) */}
+      {/* ============================================================ */}
+      {/* 6. PRESENTER OVERLAY (Bible Part 30: Shift+D)                */}
+      {/* ============================================================ */}
       <PresenterOverlay
         isOpen={isPresenterOverlayOpen}
         onClose={() => setIsPresenterOverlayOpen(false)}
@@ -438,7 +436,23 @@ export const App: React.FC = () => {
         onReset={handleReset}
       />
 
-      {/* 5. Toast Notification Banner */}
+      {/* ============================================================ */}
+      {/* 7. EPISTEMIC FACT LEDGER AUDIT MODAL                         */}
+      {/* ============================================================ */}
+      {showEpistemicLedger && currentCase && (
+        <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm flex items-center justify-center p-6">
+          <div className="w-full max-w-4xl max-h-[90vh] overflow-y-auto">
+            <EpistemicLedgerModal
+              currentCase={currentCase}
+              onClose={() => setShowEpistemicLedger(false)}
+            />
+          </div>
+        </div>
+      )}
+
+      {/* ============================================================ */}
+      {/* 8. TOAST NOTIFICATIONS BANNER                                */}
+      {/* ============================================================ */}
       {toastMessage && (
         <div className="fixed bottom-6 right-6 z-50 animate-in fade-in slide-in-from-bottom-4 duration-200">
           <div className={`px-4 py-3 rounded-2xl shadow-xl border flex items-center space-x-3 text-xs font-bold ${
